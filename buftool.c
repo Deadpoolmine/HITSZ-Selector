@@ -73,7 +73,8 @@ uINT bConvertBLKAddr2Num(puChar puBlk, pBuffer pBuf){
 record_t bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf){
     char               temp[sizeof(int) + 1];
     record_t           record;
-
+    
+    memset(temp, 0, sizeof(int) + 1);
     record.attr1 = INVALID_ATTR;
     record.attr2 = INVALID_ATTR;
     
@@ -106,17 +107,19 @@ record_t bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf){
  * @param uiIndex Buffer BLK内部索引
  * @param record 要写入的记录
  * @param pBuf 内存缓冲区
- * @return void
+ * @return bError 分别是索引错误、内存块号错误以及无错误
  */
-void bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf){
+bError bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf){
     char              temp[sizeof(int) + 1];
-
+    
+    memset(temp, 0, sizeof(int) + 1);
+    
     if(!checkBBLKNum(uiBBLKNum, pBuf)){
-        return;
+        return BUF_BBNUM_ERROR;
     }
 
     if(!checkBIndex(uiIndex)){
-        return;
+        return BUF_INDEX_ERROR;
     }    
 
     itoa(record.attr1, temp, 10);
@@ -130,6 +133,7 @@ void bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf){
     {
         *(GET_BUF_DATA(pBuf, uiBBLKNum) + uiIndex * 8 + 4 + i) = temp[i];
     }
+    return BUF_NO_ERROR;
 }
 /**
  * @brief 向Buffer BLK中写入下一块的值

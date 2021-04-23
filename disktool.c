@@ -3,6 +3,11 @@
 
 uINT _G_DBLKNextAvailableNum;
 
+/**
+ * @brief 初始化磁盘工具：
+ *        1. 初始化下一个磁盘欲写入的块块号
+ * 
+ */
 void initDTool(){
     const char * sDir = ".\\data";
     WIN32_FIND_DATA fdFile;
@@ -48,19 +53,42 @@ void initDTool(){
     }
 }
 
+/**
+ * @brief 获取下一个磁盘欲写入的块块号，并使之 !!增一
+ * 
+ * @return uINT 重置后的块号
+ */
 uINT dGetBLKNextGlobNum(){
     return _G_DBLKNextAvailableNum++;
 }
 
+/**
+ * @brief 重置下一个磁盘欲写入的块块号为当前最大块号后一个
+ * 
+ * @return uINT 重置后的块号
+ */
 uINT dResetGlobNextBLKNum(){
     initDTool();
+    return _G_DBLKNextAvailableNum;
 }
 
+/**
+ * @brief 设置下一个磁盘欲写入的块
+ * 
+ * @param uiDBLKNum 设置下一个欲写入的块的块号 
+ */
 void dSetGlobNextBLKNum(uINT uiDBLKNum){
     _G_DBLKNextAvailableNum = uiDBLKNum;
 }
 
-
+/**
+ * @brief 向磁盘写入Buffer中的数据块
+ * 
+ * @param uiBBLKNum Buffer BLK号
+ * @param uiNum 连续写入uiNum个块
+ * @param pBuf 内存缓冲区
+ * @return uINT 最后一次写入的块号
+ */
 uINT dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf){
     uINT    uiDBLKNextNum; 
     uINT    uiRemainNum;
@@ -75,6 +103,7 @@ uINT dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf){
     for (size_t i = 0; i < uiNum; i++)
     {
         uiDBLKNextNum = dGetBLKNextGlobNum();
+        bSetBLKNextBLK(uiBBLKNum + i, uiDBLKNextNum + 1, pBuf);
         puBBlk = GET_BUF_DATA(pBuf, uiBBLKNum + i);
         writeBlockToDisk(puBBlk, uiDBLKNextNum, pBuf);
     }

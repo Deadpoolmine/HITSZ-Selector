@@ -4,13 +4,22 @@
 #include "extmem.h"
 #include "conio.h"
 
+#ifndef UTILS
+#define UTILS
+
 /* 显示相关 */
 #define TIPS_ERROR      "!!![ERROR] ->->-> "
 
 /* 宏变量相关 */
 #define INVALID_ATTR    -1 
+
 #define TRUE            1
 #define FALSE           0
+#define BUF_NO_ERROR    0
+#define BUF_INDEX_ERROR 1
+#define BUF_BBNUM_ERROR 2
+
+
 
 /* BUF相关 */
 #define BUF_NBLK            (512 / 64)
@@ -43,11 +52,7 @@ typedef char *          pChar;
 typedef unsigned char * puChar;
 typedef Buffer *        pBuffer;
 typedef int             bool;
-
-
-
-
-
+typedef int             bError;
 
 /* buftool.c */
 /**
@@ -60,7 +65,7 @@ void        checkTables(pBuffer pBuf);
 void        checkBuffer(pBuffer pBuf);
 uINT        bConvertBLKAddr2Num(puChar puBlk, pBuffer pBuf);
 record_t    bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf);
-void        bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf);
+bError      bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf);
 uINT        bSetBLKNextBLK(uINT uiBBLKNum, uINT uiDBLKNextNum, pBuffer pBuf);
 void        bClearBLK(uINT uiBBLKNum, pBuffer pBuf);
 
@@ -70,3 +75,6 @@ uINT        dGetBLKNextGlobNum();
 uINT        dResetGlobNextBLKNum();
 void        dSetGlobNextBLKNum(uINT uiDBLKNum);
 uINT        dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf);
+
+#endif // !UTILS
+

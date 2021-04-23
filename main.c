@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "selector.h"
 
 // int main(int argc, char **argv)
 // {
@@ -72,9 +73,10 @@
 
 int main(int argc, char const *argv[])
 {
-    Buffer  buf;
-    pBuffer pBuf;
-    
+    Buffer              buf;
+    pBuffer             pBuf;
+    querySelector_t     querySelector;
+
     initDTool();
     if (!initBuffer(520, 64, &buf))
     {
@@ -83,19 +85,24 @@ int main(int argc, char const *argv[])
     }
     pBuf = &buf;
 
-    checkTables(pBuf);
-    
-    
-    record_t record;
-    record.attr1 = 1;
-    record.attr2 = 3;
+    dSetGlobNextBLKNum(LINEAR_SEARCH_RES);
+    querySelector.uiColNum = 1;             /* 选择第一个属性，也就是S.C */
+    querySelector.uiValue = 50;             /* S.C = 50 */
+    linearSearch(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, pBuf);      
 
-    puChar puBlk = getNewBlockInBuffer(pBuf);
-    uINT uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
-    bClearBLK(uiBBLKNum, pBuf);
-    bSetBLKRecord(uiBBLKNum, 0, record, pBuf);
-    uINT uiDBLKNextNum = dWriteBLK(uiBBLKNum, 1, pBuf);
-    printf("写入磁盘：%d\n", uiDBLKNextNum - 1);
+    // checkTables(pBuf);
+    
+    
+    // record_t record;
+    // record.attr1 = 1;
+    // record.attr2 = 3;
+
+    // puChar puBlk = getNewBlockInBuffer(pBuf);
+    // uINT uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
+    // bClearBLK(uiBBLKNum, pBuf);
+    // bSetBLKRecord(uiBBLKNum, 0, record, pBuf);
+    // uINT uiDBLKNextNum = dWriteBLK(uiBBLKNum, 1, pBuf);
+    // printf("写入磁盘：%d\n", uiDBLKNextNum - 1);
 
     
 
