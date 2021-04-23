@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.sql": "sql",
+        "utils.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c",
+        "windows.h": "c",
+        "string.h": "c",
+        "extmem.h": "c"
+    }
+}
