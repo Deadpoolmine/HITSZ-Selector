@@ -6,6 +6,8 @@
         "stdio.h": "c",
         "windows.h": "c",
         "string.h": "c",
-        "extmem.h": "c"
+        "extmem.h": "c",
+        "selector.h": "c",
+        "merger.h": "c"
     }
 }

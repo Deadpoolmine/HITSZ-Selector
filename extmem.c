@@ -10,6 +10,14 @@
 #include<string.h>
 #include "extmem.h"
 
+/**
+ * @brief 初始化Buffer
+ * 
+ * @param bufSize Buffer的大小
+ * @param blkSize 块大小
+ * @param buf Buffer数据结构
+ * @return Buffer* 
+ */
 Buffer *initBuffer(size_t bufSize, size_t blkSize, Buffer *buf)
 {
     int i;
@@ -31,11 +39,22 @@ Buffer *initBuffer(size_t bufSize, size_t blkSize, Buffer *buf)
     return buf;
 }
 
+/**
+ * @brief 清除Buffer中的内容
+ * 
+ * @param buf Buffer
+ */
 void freeBuffer(Buffer *buf)
 {
     free(buf->data);
 }
 
+/**
+ * @brief 在Buffer中开辟一个新的块供写入
+ * 
+ * @param buf 内存缓冲区
+ * @return unsigned char*   该Block的跳过valid位的地址 
+ */
 unsigned char *getNewBlockInBuffer(Buffer *buf)
 {
     unsigned char *blkPtr;
@@ -60,13 +79,24 @@ unsigned char *getNewBlockInBuffer(Buffer *buf)
     buf->numFreeBlk--;
     return blkPtr + 1;
 }
-
+/**
+ * @brief 根据BLK起始地址，清除Buffer中的该块
+ * 
+ * @param blk BLK起始地址
+ * @param buf 内存缓冲区
+ */
 void freeBlockInBuffer(unsigned char *blk, Buffer *buf)
 {
     *(blk - 1) = BLOCK_AVAILABLE;
     buf->numFreeBlk++;
 }
 
+/**
+ * @brief 清理磁盘上的一个数据块
+ * 
+ * @param addr 磁盘数据块块号
+ * @return int 
+ */
 int dropBlockOnDisk(unsigned int addr)
 {
     char filename[40];
@@ -81,7 +111,13 @@ int dropBlockOnDisk(unsigned int addr)
 
     return 0;
 }
-
+/**
+ * @brief 从磁盘上读入一个数据块
+ * 
+ * @param addr 磁盘数据块块号
+ * @param buf 内存缓冲区
+ * @return unsigned char*  该Block的跳过valid位的地址 
+ */
 unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
 {
     char filename[40];
@@ -127,9 +163,17 @@ unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
     fclose(fp);
     buf->numFreeBlk--;
     buf->numIO++;
+    //printf("读入磁盘块\n");
     return blkPtr;
 }
-
+/**
+ * @brief 向磁盘中写入一个数据块，并将内存中的该数据块释放
+ * 
+ * @param blkPtr 欲写入块起始指针
+ * @param addr 目标数据块地址
+ * @param buf 内存缓冲区
+ * @return int 
+ */
 int writeBlockToDisk(unsigned char *blkPtr, unsigned int addr, Buffer *buf)
 {
     char filename[40];

@@ -1,75 +1,8 @@
 #include "utils.h"
 #include "selector.h"
+#include "merger.h"
 
-// int main(int argc, char **argv)
-// {
-//     Buffer buf; /* A buffer */
-//     unsigned char *blk; /* A pointer to a block */
-//     int i = 0;
-
-//     /* Initialize the buffer */
-//     if (!initBuffer(520, 64, &buf))
-//     {
-//         perror("Buffer Initialization Failed!\n");
-//         return -1;
-//     }
-
-//     /* Get a new block in the buffer */
-//     blk = getNewBlockInBuffer(&buf);
-
-//     /* Fill data into the block */
-//     for (i = 0; i < 8; i++)
-//         *(blk + i) = 'a' + i;
-
-//     /* Write the block to the hard disk */
-//     if (writeBlockToDisk(blk, 8888, &buf) != 0)
-//     {
-//         perror("Writing Block Failed!\n");
-//         return -1;
-//     }
-
-//     /* Read the block from the hard disk */
-//     if ((blk = readBlockFromDisk(1, &buf)) == NULL)
-//     {
-//         perror("Reading Block Failed!\n");
-//         return -1;
-//     }
-
-//     /* Process the data in the block */
-//     int X = -1;
-//     int Y = -1;
-//     int addr = -1;
-
-//     char str[5];
-//     printf("block 1:\n");
-//     for (i = 0; i < 7; i++) //一个blk存7个元组加一个地址
-//     {
-
-//         for (int k = 0; k < 4; k++)
-//         {
-//             str[k] = *(blk + i*8 + k);          //一个INT型占用4个字节
-//         }
-//         X = atoi(str);                          //转换为整型
-//         for (int k = 0; k < 4; k++)
-//         {
-//             str[k] = *(blk + i*8 + 4 + k);
-//         }
-//         Y = atoi(str);
-//         printf("(%d, %d) ", X, Y);
-//     }
-//     for (int k = 0; k < 4; k++)
-//     {
-//         str[k] = *(blk + i*8 + k);
-//     }
-//     addr = atoi(str);
-//     printf("\nnext address = %d \n", addr);
-
-
-//     printf("\n");
-//     printf("IO's is %d\n", buf.numIO); /* Check the number of IO's */
-
-//     return 0;
-// }
+#define TEST
 
 int main(int argc, char const *argv[])
 {
@@ -85,14 +18,70 @@ int main(int argc, char const *argv[])
     }
     pBuf = &buf;
 
-    dSetGlobNextBLKNum(LINEAR_SEARCH_RES);
-    querySelector.uiColNum = 1;             /* 选择第一个属性，也就是S.C */
+#ifndef TEST
+    /* LinearSearch */
+    dSetGlobNextBLKNum(LINEAR_SEARCH_POS);
+    querySelector.uiAttrNum = 1;            /* 选择第一个属性，也就是S.C */
     querySelector.uiValue = 50;             /* S.C = 50 */
     linearSearch(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, pBuf);      
+    dCheckBLKs(100, 101, pBuf);
+    
+    /* TPMMS FOR S */
+    dSetGlobNextBLKNum(TPMMS_S_POS);
+    querySelector.uiAttrNum = 1;
+    querySelector.uiValue = INVALID_ATTR;
+    tpmms(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, FALSE, pBuf);
+    dCheckBLKs(TPMMS_S_POS + TABLE_S_NBLK, TPMMS_S_POS + TABLE_S_NBLK + TABLE_S_NBLK - 1, pBuf);
 
+    /* TPMMS FOR R */
+    dSetGlobNextBLKNum(TPMMS_R_POS);
+    querySelector.uiAttrNum = 1;
+    querySelector.uiValue = INVALID_ATTR;
+    tpmms(querySelector, 1, TABLE_R_NBLK, FALSE, pBuf);
+    dCheckBLKs(TPMMS_R_POS + TABLE_R_NBLK, TPMMS_R_POS + TABLE_R_NBLK + TABLE_R_NBLK - 1, pBuf);
+
+    /* Build Index File */
+    uINT uiNum = 0;
+    dSetGlobNextBLKNum(INDEX_FILE_POS);
+    dBuildIndexFile(TPMMS_S_POS + 32, TPMMS_S_POS + 32 + 31, 1, 8, &uiNum, pBuf);
+    printf("\n");
+    dCheckBLKs(2000, 2000, pBuf);
+    
+    /* Index Search */
+    dSetGlobNextBLKNum(INDEX_SEARCH_POS);
+    querySelector.uiAttrNum = 1;             /* 选择第一个属性，也就是S.C */
+    querySelector.uiValue = 50;             /* S.C = 50 */
+    indexSearch(querySelector, 2000, 2000, pBuf);
+    dCheckBLKs(3000, 3001, pBuf);
+#endif // !TEST
+    // printf("-----------------------------------------------Table S-----------------------------------------------\n");
+    // dCheckBLKs(TPMMS_S_POS + TABLE_S_NBLK, TPMMS_S_POS + TABLE_S_NBLK + TABLE_S_NBLK - 1, pBuf);
+    // printf("-----------------------------------------------Table R-----------------------------------------------\n");
+    // dCheckBLKs(TPMMS_R_POS + TABLE_R_NBLK, TPMMS_R_POS + TABLE_R_NBLK + TABLE_R_NBLK - 1, pBuf);
+    
+    uINT uiNum = 0;
+    mergerOptions_t mergerOptions;
+    mergerOptions.uiAttrNumR = 1;
+    mergerOptions.uiAttrNumS = 1;
+    mergerOptions.mergerType = DIFF;
+    uINT cnt = sortMerge(mergerOptions, 17, 48, 1, 16, &uiNum, pBuf);
+    dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
+    printf("CNT: %d\n", cnt);
+    
+    // dCheckTpmmsS(TPMMS_S_RES, pBuf);
+    
     // checkTables(pBuf);
     
-    
+    // dCheckTables(pBuf);
+    // for (size_t i = 0; i < 8; i++)
+    // {
+    //     readBlockFromDisk(1 + i, pBuf);
+    // }
+    // dSetGlobNextBLKNum(1000);
+    // sortInBuf(1, 8, FALSE, 1, pBuf);
+    // dWriteBLK(1, 8, pBuf);
+    // dCheckBLKs(1000, 1007, pBuf);
+
     // record_t record;
     // record.attr1 = 1;
     // record.attr2 = 3;

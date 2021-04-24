@@ -3,6 +3,7 @@
 #include "string.h"
 #include "extmem.h"
 #include "conio.h"
+#include "limits.h"
 
 #ifndef UTILS
 #define UTILS
@@ -54,6 +55,18 @@ typedef Buffer *        pBuffer;
 typedef int             bool;
 typedef int             bError;
 
+static inline uINT getKeyAttr(record_t record, uINT uiAttrNum){
+    switch (uiAttrNum)
+    {
+    case 1:
+        return record.attr1;
+    case 2:
+        return record.attr2;
+    default:
+        break;
+    }
+}
+
 /* buftool.c */
 /**
  * @brief 获取 Buffer BLK中 data的起始位置，因为需要跳过Valid字节
@@ -61,7 +74,6 @@ typedef int             bError;
  */
 #define     GET_BUF_DATA(pBuf, uiBBLKNum) (pBuf->data + (uiBBLKNum - 1) * (DISK_BLK_PER_SZ + 1) + 1)
 
-void        checkTables(pBuffer pBuf);
 void        checkBuffer(pBuffer pBuf);
 uINT        bConvertBLKAddr2Num(puChar puBlk, pBuffer pBuf);
 record_t    bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf);
@@ -75,6 +87,12 @@ uINT        dGetBLKNextGlobNum();
 uINT        dResetGlobNextBLKNum();
 void        dSetGlobNextBLKNum(uINT uiDBLKNum);
 uINT        dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf);
+void        dCheckBLKs(uINT uiDBLKLowNum,uINT uiDBLKHighNum, pBuffer pBuf);
+void        dCheckTables(pBuffer pBuf);
+void        dCheckTpmmsS(uINT uiTPMMSRes, pBuffer pBuf);
+uINT        dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT uiGap, uINT *puiNum, pBuffer pBuf);
 
+/* sorttool.c */
+void        sortInBuf(uINT uiBBLKLowNum, uINT uiBBLKHighNum, bool bIsAscend, uINT uiKeyCol, pBuffer pBuf);
 #endif // !UTILS
 

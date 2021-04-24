@@ -15,9 +15,9 @@
  * @return false 不合法
  */
 bool checkBBLKNum(uINT uiBBLKNum, pBuffer pBuf){
-    if(uiBBLKNum > (pBuf->numAllBlk - pBuf->numFreeBlk)){
-        printf(TIPS_ERROR "[checkBBLKNum: uiBBLKNum = %d > BlkHasBeenRead = %d]\n", 
-               uiBBLKNum, (pBuf->numAllBlk - pBuf->numFreeBlk));
+    if(uiBBLKNum > pBuf->numAllBlk){
+        printf(TIPS_ERROR "[checkBBLKNum: uiBBLKNum = %d > AllBLK = %d]\n", 
+               uiBBLKNum, pBuf->numAllBlk);
         return FALSE;
     }
     return TRUE;
@@ -39,18 +39,7 @@ bool checkBIndex(uINT uiIndex){
     return TRUE;
 }
 
-/**
- * @brief 查看Buffer状态
- * 
- * @param pBuf 缓冲区 
- */
-void checkBuffer(pBuffer pBuf){
-    printf("buffer.blkSize: %d\n",pBuf->blkSize);
-    printf("buffer.bufSize: %d\n",pBuf->bufSize);
-    printf("buffer.numAllBlk: %d\n",pBuf->numAllBlk);
-    printf("buffer.numFreeBlk: %d\n",pBuf->numFreeBlk);
-    printf("buffer.numIO: %d\n",pBuf->numIO);
-}
+
 /**
  * @brief 将Buffer中的地址转换为相应Buffer中的BLK号
  * 
@@ -152,41 +141,7 @@ uINT bSetBLKNextBLK(uINT uiBBLKNum, uINT uiDBLKNextNum, pBuffer pBuf){
     return uiDBLKNextNum;
 }
 
-/**
- * @brief 查看关系R和S关系
- * 
- * @param pBuf 内存读取缓冲区
- */
-void checkTables(pBuffer pBuf) {
-    puChar blk;
-    printf("\n------------------------------Table R:------------------------------\n");
-    for (size_t i = 0; i < TABLE_R_NBLK; i++)
-    {
-        blk = readBlockFromDisk(i + 1, pBuf);
-        printf("[BLK %d]: ", i + 1);
-        for (size_t j = 0; j < BLK_NRECORD; j++)
-        {
-            record_t record = bGetBLKRecord(bConvertBLKAddr2Num(blk, pBuf), j, pBuf);
-            printf("(%d, %d)\t", record.attr1, record.attr2);
-        }
-        printf("\n");
-        freeBlockInBuffer(blk, pBuf);
-    }
 
-    printf("\n------------------------------Table S:------------------------------\n");
-    for (size_t i = 0; i < TABLE_S_NBLK; i++)
-    {
-        blk = readBlockFromDisk(TABLE_R_NBLK + i + 1, pBuf);
-        printf("[BLK %d]: ", TABLE_R_NBLK + i + 1);
-        for (size_t j = 0; j < BLK_NRECORD; j++)
-        {
-            record_t record = bGetBLKRecord(bConvertBLKAddr2Num(blk, pBuf), j, pBuf);
-            printf("(%d, %d)\t", record.attr1, record.attr2);
-        }
-        printf("\n");
-        freeBlockInBuffer(blk, pBuf);
-    }
-}
 
 /**
  * @brief 清除Buffer BLK中的内容（全部置为0）
@@ -201,4 +156,31 @@ void bClearBLK(uINT uiBBLKNum, pBuffer pBuf){
     }
 
     memset(GET_BUF_DATA(pBuf, uiBBLKNum), 0, DISK_BLK_PER_SZ);
+}
+
+
+/**
+ * @brief 查看Buffer状态
+ * 
+ * @param pBuf 缓冲区 
+ */
+void checkBuffer(pBuffer pBuf){
+    record_t    record;
+    printf("buffer.blkSize: %d\n",pBuf->blkSize);
+    printf("buffer.bufSize: %d\n",pBuf->bufSize);
+    printf("buffer.numAllBlk: %d\n",pBuf->numAllBlk);
+    printf("buffer.numFreeBlk: %d\n",pBuf->numFreeBlk);
+    printf("buffer.numIO: %d\n",pBuf->numIO);
+
+    for (uINT uiBBLKNum = 1; uiBBLKNum < pBuf->numAllBlk - pBuf->numFreeBlk + 1; uiBBLKNum++)
+    {
+        printf("[BBLK %d]: ", uiBBLKNum);
+        for (uINT uiIndex = 0; uiIndex < BLK_NRECORD; uiIndex++)
+        {
+            record = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
+            printf("(%d, %d)\t", record.attr1, record.attr2);
+        }
+        printf("\n");
+    }
+    
 }
