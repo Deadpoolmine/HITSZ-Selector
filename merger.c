@@ -3,19 +3,19 @@
 
 
 /**
- * @brief åŸºäºæ’åºçš„ä¸¤è¶Ÿç®—æ³• 
+ * @brief »ùÓÚÅÅĞòµÄÁ½ÌËËã·¨ 
  * 
- * @param mergerOptions è¿æ¥é€‰é¡¹
- * @param uiDBLKLowNumS é›†åˆSçš„ä½å—å·
- * @param uiDBLKHighNumS é›†åˆSçš„é«˜å—å·
- * @param uiDBLKLowNumR é›†åˆRçš„ä½å—å·
- * @param uiDBLKHighNumR é›†åˆRçš„é«˜å—å·
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return uINT å…ƒç´ ä¸ªæ•° - äº¤ã€å¹¶ã€å·® å‡ä¸ºå…ƒç»„ï¼Œè¿æ¥ä¸ºè¿æ¥æ•°
+ * @param mergerOptions Á¬½ÓÑ¡Ïî
+ * @param uiDBLKLowNumS ¼¯ºÏSµÄµÍ¿éºÅ
+ * @param uiDBLKHighNumS ¼¯ºÏSµÄ¸ß¿éºÅ
+ * @param uiDBLKLowNumR ¼¯ºÏRµÄµÍ¿éºÅ
+ * @param uiDBLKHighNumR ¼¯ºÏRµÄ¸ß¿éºÅ
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return uINT ÔªËØ¸öÊı - ½»¡¢²¢¡¢²î ¾ùÎªÔª×é£¬Á¬½ÓÎªÁ¬½ÓÊı
  */
 uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHighNumS, uINT uiDBLKLowNumR, uINT uiDBLKHighNumR, uINT *puiNum, pBuffer pBuf){
     querySelector_t         querySelector;
-
+    
     puChar                  puWriteBlk;
     uINT                    uiWriteBBLKNum;
     uINT                    uiWriteCurIndex;
@@ -38,6 +38,24 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     uINT                    uiOpCnt;
     record_t                record;
 
+    switch (mergerOptions.mergerType)
+    {
+    case JOIN:
+        DISPLAY_TIPS("»ùÓÚÅÅĞòµÄÁ¬½ÓËã·¨");
+        break;
+    case UNION:
+        DISPLAY_TIPS("»ùÓÚÅÅĞòµÄ¼¯ºÏ²¢ÔËËã");
+        break;
+    case INTER:
+        DISPLAY_TIPS("»ùÓÚÅÅĞòµÄ¼¯ºÏ½»ÔËËã");
+        break;
+    case DIFF:
+        DISPLAY_TIPS("»ùÓÚÅÅĞòµÄ¼¯ºÏ²îÔËËã");
+        break; 
+    default:
+        break;
+    }
+
     dResetGlobNextBLKNum();
     *puiNum = 0;
     uiOpCnt = 0;
@@ -49,21 +67,18 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     querySelector.uiAttrNum = mergerOptions.uiAttrNumS;
     querySelector.uiBasePos = SM_TEMP_S_POS;
     dSetGlobNextBLKNum(SM_TEMP_S_POS);
-    tpmms(querySelector, uiDBLKLowNumS, uiDBLKHighNumS, TRUE, pBuf);        /* å‡åºæ’åˆ— */
+    tpmms(querySelector, uiDBLKLowNumS, uiDBLKHighNumS, TRUE, pBuf);        /* ÉıĞòÅÅÁĞ */
 
     dSetGlobNextBLKNum(SM_POS);
-    puWriteBlk      = getNewBlockInBuffer(pBuf);
-    uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);    
-    uiWriteCurIndex = 0;
-    bClearBLK(uiWriteBBLKNum, pBuf);
+    INIT_WRITE_BLK();
 
     uiDBLKNumS = SM_TEMP_S_POS + TABLE_S_NBLK;
     uiDBLKNumR = SM_TEMP_R_POS + TABLE_R_NBLK;
     
-    printf("--------\n");
-    dCheckBLKs(uiDBLKNumS, uiDBLKNumS + 31, pBuf);
-    printf("--------\n");
-    dCheckBLKs(uiDBLKNumR, uiDBLKNumR + 15, pBuf);
+    // printf("--------\n");
+    // dCheckBLKs(uiDBLKNumS, uiDBLKNumS + 31, pBuf);
+    // printf("--------\n");
+    // dCheckBLKs(uiDBLKNumR, uiDBLKNumR + 15, pBuf);
 
     for (size_t i = 0; i < TABLE_S_NBLK; i++)
     {
@@ -92,48 +107,34 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                     case JOIN:{
                         if(uiKeyR == uiKeyS) {
                             uiOpCnt++;
+                            
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                             uiWriteCurIndex++;
-                            if(uiWriteCurIndex == BLK_NRECORD){
-                                dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                                puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                                uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                                bClearBLK(uiWriteBBLKNum, pBuf);
-                                uiWriteCurIndex = 0;
-                                *puiNum = *puiNum + 1;
-                            }
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
+                                                printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordR, pBuf);
                             uiWriteCurIndex++;
-                            if(uiWriteCurIndex == BLK_NRECORD){
-                                dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                                puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                                uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                                bClearBLK(uiWriteBBLKNum, pBuf);
-                                uiWriteCurIndex = 0;
-                                *puiNum = *puiNum + 1;
-                            }
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
+                                                printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
                         }
-                        else if(uiKeyR > uiKeyS){                                        /* Ræ’äº†åºï¼Œå¯ä»¥ç›´æ¥è·³è¿‡äº† */
+                        else if(uiKeyR > uiKeyS){                                        /* RÅÅÁËĞò£¬¿ÉÒÔÖ±½ÓÌø¹ıÁË */
                             bCanBreak = TRUE;
                         }
                     }
                         break;
                     case INTER:{
                         if(recordR.attr1 == recordS.attr1 && recordR.attr2 == recordS.attr2){
-                            bCanBreak = TRUE;
-                        }
-                        else {
                             uiOpCnt++;
+
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                             uiWriteCurIndex++;
-                            if(uiWriteCurIndex == BLK_NRECORD){
-                                dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                                puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                                uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                                bClearBLK(uiWriteBBLKNum, pBuf);
-                                uiWriteCurIndex = 0;
-                                *puiNum = *puiNum + 1;
-                            }
+                            
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
+                                                printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                            bCanBreak = TRUE;
+                        }
+                        else if(uiKeyR > uiKeyS) {
                             bCanBreak = TRUE;
                         }
                     }
@@ -168,23 +169,19 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                 case UNION:
                 case DIFF:{
                     uiOpCnt++;
+                
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                     uiWriteCurIndex++;
-                    if(uiWriteCurIndex == BLK_NRECORD){
-                        dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                        puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                        uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                        bClearBLK(uiWriteBBLKNum, pBuf);
-                        uiWriteCurIndex = 0;
-                        *puiNum = *puiNum + 1;
-                    }
+                
+                    WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
+                                        printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
                 }
                     break;
                 default:
                     break;
                 }
             }
-            freeBlockInBuffer(puBlkS, pBuf);                                 /* æ¸…é™¤å†…å­˜ä¸­è¯»å…¥çš„æ•°æ® */    
+            freeBlockInBuffer(puBlkS, pBuf);                                 /* Çå³ıÄÚ´æÖĞ¶ÁÈëµÄÊı¾İ */    
         }   
     }
     if(mergerOptions.mergerType == UNION) {
@@ -200,22 +197,19 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                 uiOpCnt++;
                 bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordR, pBuf);
                 uiWriteCurIndex++;
-                if(uiWriteCurIndex == BLK_NRECORD){
-                    dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                    puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                    uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                    bClearBLK(uiWriteBBLKNum, pBuf);
-                    uiWriteCurIndex = 0;
-                    *puiNum = *puiNum + 1;
-                }
+                
+                WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
+                                    printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                
                 freeBlockInBuffer(puBlkR, pBuf);
             }
         }
     }
     
     if(uiWriteCurIndex != 0) {
-        dWriteBLK(uiWriteBBLKNum, 1, pBuf);
-        *puiNum = *puiNum + 1;
+        uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+        *puiNum = *puiNum + 1; 
+        printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1);
     }
     else {
         freeBlockInBuffer(puWriteBlk, pBuf);

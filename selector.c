@@ -13,13 +13,14 @@
 #define GET_NEXT_DBLK(segmentIndex)             puiDNextIndex[segmentIndex]++
 #define GET_CUR_DBLK_INDEX(segmentIndex)        puiDNextIndex[segmentIndex]
 #define RESET_CUR_DBLK(segmentIndex)            puiDNextIndex[segmentIndex] = 0
+
 /**
- * @brief çº¿æ€§æœç´¢
+ * @brief ÏßĞÔËÑË÷
  * 
- * @param querySelector æœç´¢å™¨ 
- * @param uiDBLKLowNum ç£ç›˜ä¸Šä½å—å·
- * @param uiDBLKHighNum åœ°ç›˜ä¸Šé«˜å—å·
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param querySelector ËÑË÷Æ÷ 
+ * @param uiDBLKLowNum ´ÅÅÌÉÏµÍ¿éºÅ
+ * @param uiDBLKHighNum µØÅÌÉÏ¸ß¿éºÅ
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum, pBuffer pBuf) {
     uINT        uiBBLKNum;
@@ -32,32 +33,36 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
 
     record_t    record;
 
+    uINT        uiRecordNum;
+
+    
+    DISPLAY_TIPS("»ùÓÚÏßĞÔËÑË÷µÄÑ¡ÔñËã·¨ - S.C = 50");
     uiNum               = uiDBLKHighNum - uiDBLKLowNum + 1;
-    puWriteBlk          = getNewBlockInBuffer(pBuf);
-    uiWriteBBLKNum      = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-    uiWriteCurIndex     = 0;
-    bClearBLK(uiWriteBBLKNum, pBuf);
+    uiRecordNum         = 0;
+    INIT_IO_COUNTER();
+    INIT_WRITE_BLK();
 
     for (size_t i = 0; i < uiNum; i++)
     {
-        puBlk = readBlockFromDisk(uiDBLKLowNum + i, pBuf);              /* è¯»ä¸€å—è‡³å†…å­˜ */
+        puBlk = readBlockFromDisk(uiDBLKLowNum + i, pBuf);              /* ¶ÁÒ»¿éÖÁÄÚ´æ */
         uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
+#ifdef OUTPUT_ON
+        printf("¶ÁÈëÊı¾İ¿é %ld\n", uiDBLKLowNum + i);
+#endif // OUTPUT_ON
         for (uINT uiIndex = 0; uiIndex < BLK_NRECORD; uiIndex++)
         {
             record = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
-            if(uiWriteCurIndex == BLK_NRECORD) {                    /* å†™æ»¡ä¸€ä¸ªBLKå°±è¯¥å†™å…¥ç£ç›˜äº† */
-                dWriteBLK(uiWriteBBLKNum, 1, pBuf);                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                puWriteBlk      = getNewBlockInBuffer(pBuf);            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                bClearBLK(uiWriteBBLKNum, pBuf);
-                uiWriteCurIndex = 0;
-            }
+            WRITE_TILL_BLK_FILL(printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
             switch (querySelector.uiAttrNum)
             {
             case 1:{
                 if(record.attr1 == querySelector.uiValue){
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
-                    uiWriteCurIndex++;           
+                    uiWriteCurIndex++;     
+                    uiRecordNum++;
+#ifdef OUTPUT_ON
+                    DISPLAY_RECORD(record);      
+#endif // OUTPUT_ON
                 }
             }
                 break;
@@ -65,6 +70,10 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
                 if(record.attr2 == querySelector.uiValue){
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
                     uiWriteCurIndex++;
+                    uiRecordNum++;
+#ifdef OUTPUT_ON
+                    DISPLAY_RECORD(record);      
+#endif // OUTPUT_ON
                 }
             }
                 break;
@@ -72,26 +81,32 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
                 break;
             }   
         }
-        freeBlockInBuffer(puBlk, pBuf);                                 /* æ¸…é™¤å†…å­˜ä¸­è¯»å…¥çš„æ•°æ® */
+        freeBlockInBuffer(puBlk, pBuf);                                 /* Çå³ıÄÚ´æÖĞ¶ÁÈëµÄÊı¾İ */
     }
     if(uiWriteCurIndex != 0) {
-        dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+        uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+#ifdef OUTPUT_ON
+        printf(FONT_COLOR_RED "½á¹ûĞ´Èë´ÅÅÌ¿é %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1);
+#endif // OUTPUT_ON
     }
     else {
         freeBlockInBuffer(puWriteBlk, pBuf);
     }
     
-    checkBuffer(pBuf);                                                  /* æŸ¥çœ‹I/Oæƒ…å†µ */
+#ifdef OUTPUT_ON
+    printf("Âú×ãÌõ¼şµÄÔª×é¹² %ld ¸ö\n", uiRecordNum);
+    DISPLAY_IO_CNT();
+#endif // OUTPUT_ON
 }
 
 /**
- * @brief äºŒé˜¶æ®µå¤šè·¯æ’åºæ£€æµ‹Compare BLKæ¥åˆ¤æ–­æ˜¯å¦å®Œæˆ
+ * @brief ¶ş½×¶Î¶àÂ·ÅÅĞò¼ì²âCompare BLKÀ´ÅĞ¶ÏÊÇ·ñÍê³É
  * 
- * @param uiCompareBBLKNum Compare BLKåœ¨Bufferä¸­çš„åºå·
- * @param uiSegment åˆ†æˆäº†å‡ è·¯ï¼Ÿå‡ ç»„ï¼Ÿ
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return true å®Œæˆ
- * @return false æœªå®Œæˆ 
+ * @param uiCompareBBLKNum Compare BLKÔÚBufferÖĞµÄĞòºÅ
+ * @param uiSegment ·Ö³ÉÁË¼¸Â·£¿¼¸×é£¿
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return true Íê³É
+ * @return false Î´Íê³É 
  */
 bool __tpmmsCheckIsOver(uINT uiCompareBBLKNum, uINT uiSegment, pBuffer pBuf){
     bool        bIsOver = TRUE;
@@ -108,14 +123,14 @@ bool __tpmmsCheckIsOver(uINT uiCompareBBLKNum, uINT uiSegment, pBuffer pBuf){
 }
 
 /**
- * @brief æ ¹æ®å‡åºæˆ–è€…é™åºé€‰æ‹©æœ€å¤§å€¼æˆ–æœ€å°å€¼æ‰€åœ¨çš„ç»„å·
+ * @brief ¸ù¾İÉıĞò»òÕß½µĞòÑ¡Ôñ×î´óÖµ»ò×îĞ¡ÖµËùÔÚµÄ×éºÅ
  * 
- * @param uiCompareBBLKNum Compare BLKå·
- * @param uiSegment åˆ†ç»„
- * @param uiAttrNum å…³é”®å­—
- * @param bIsAscend æ˜¯å¦å‡åº
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return uINT ç»„å¥½
+ * @param uiCompareBBLKNum Compare BLKºÅ
+ * @param uiSegment ·Ö×é
+ * @param uiAttrNum ¹Ø¼ü×Ö
+ * @param bIsAscend ÊÇ·ñÉıĞò
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return uINT ×éºÃ
  */
 uINT __tpmmsSelectMaxMinIndex(uINT uiCompareBBLKNum, uINT uiSegment, uINT uiAttrNum, bool bIsAscend, pBuffer pBuf){
     int         iKeyMaxMin;
@@ -150,12 +165,12 @@ uINT __tpmmsSelectMaxMinIndex(uINT uiCompareBBLKNum, uINT uiSegment, uINT uiAttr
     return uiMaxMinIndex;
 }
 /**
- * @brief ä¸¤é˜¶æ®µå¤šè·¯å½’å¹¶æ’åº
+ * @brief Á½½×¶Î¶àÂ·¹é²¢ÅÅĞò
  * 
- * @param querySelector æœç´¢å™¨ 
- * @param uiDBLKLowNum ç£ç›˜ä¸Šä½å—å·
- * @param uiDBLKHighNum åœ°ç›˜ä¸Šé«˜å—å·
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param querySelector ËÑË÷Æ÷ 
+ * @param uiDBLKLowNum ´ÅÅÌÉÏµÍ¿éºÅ
+ * @param uiDBLKHighNum µØÅÌÉÏ¸ß¿éºÅ
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum, bool bIsAscend, pBuffer pBuf){
     uINT        uiNum;
@@ -174,32 +189,31 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
     puChar      puCompareBlk;
     uINT        uiCompareBBLKNum;
 
-    uINT*       puiBNextIndex;                                      /* ç»„ Buffer RecordæŒ‡é’ˆ*/
-    uINT*       puiDNextIndex;                                      /* ç»„ ç£ç›˜è¯»æŒ‡é’ˆ */
+    uINT*       puiBNextIndex;                                      /* ×é Buffer RecordÖ¸Õë*/
+    uINT*       puiDNextIndex;                                      /* ×é ´ÅÅÌ¶ÁÖ¸Õë */
     
     puChar      puWriteBlk;
     uINT        uiWriteBBLKNum;
-    uINT        uiWriteCurIndex;                                    /* å†™å…¥ æŒ‡é’ˆ */
+    uINT        uiWriteCurIndex;                                    /* Ğ´Èë Ö¸Õë */
 
     record_t    record;
     uINT        uiMaxMinSegmentIndex;
 
-
     uiNum = uiDBLKHighNum - uiDBLKLowNum + 1;
     uiBaseSegmentBBLKNum = -1;
     
-    if(uiNum < BUF_NBLK * BUF_NBLK){                                /* ä¸¤é˜¶æ®µäºŒè·¯å½’å¹¶æ’åº */
-        uiNumPerSegment = BUF_NBLK;                                 /* æ¯ç»„8ä¸ªå— */
-        uiSegment = uiNum / uiNumPerSegment;                        /* åˆ†æˆuiSegmentç»„ */
+    if(uiNum < BUF_NBLK * BUF_NBLK){                                /* Á½½×¶Î¶şÂ·¹é²¢ÅÅĞò */
+        uiNumPerSegment = BUF_NBLK;                                 /* Ã¿×é8¸ö¿é */
+        uiSegment = uiNum / uiNumPerSegment;                        /* ·Ö³ÉuiSegment×é */
         
         if(uiSegment > BLK_NRECORD){
             printf(TIPS_ERROR "[tpmms: Compare BLK can't hold #%d segments]\n", uiSegment);
             return;    
         }
 
-        for (size_t i = 0; i < uiSegment; i++)                      /* ç¬¬ä¸€è¶Ÿæ‰«æ */
+        for (size_t i = 0; i < uiSegment; i++)                      /* µÚÒ»ÌËÉ¨Ãè */
         {
-            uiDBLKNum = uiDBLKLowNum + i * uiNumPerSegment;         /* è¯¥ç»„åœ¨ç£ç›˜ä¸­çš„ä½ç½® */
+            uiDBLKNum = uiDBLKLowNum + i * uiNumPerSegment;         /* ¸Ã×éÔÚ´ÅÅÌÖĞµÄÎ»ÖÃ */
             for (size_t j = 0; j < uiNumPerSegment; j++)
             {
                 readBlockFromDisk(uiDBLKNum + j, pBuf);
@@ -213,10 +227,7 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
         uiCompareBBLKNum = bConvertBLKAddr2Num(puCompareBlk, pBuf);
         bClearBLK(uiCompareBBLKNum, pBuf);
 
-        puWriteBlk       = getNewBlockInBuffer(pBuf);
-        uiWriteBBLKNum   = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-        bClearBLK(uiWriteBBLKNum, pBuf);
-        uiWriteCurIndex  = 0;
+        INIT_WRITE_BLK();
 
         puiBNextIndex = (uINT *)malloc(uiSegment * sizeof(uINT));
         puiDNextIndex = (uINT *)malloc(uiSegment * sizeof(uINT));
@@ -227,7 +238,7 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
         }
 
         
-        for (uINT uiSegmentIndex = 0; uiSegmentIndex < uiSegment; uiSegmentIndex++)                                       /* åˆå§‹æ¯ä¸ªåˆ†ç»„éƒ½è¯»å…¥ä¸€å—è‡³å†…å­˜ */
+        for (uINT uiSegmentIndex = 0; uiSegmentIndex < uiSegment; uiSegmentIndex++)                                       /* ³õÊ¼Ã¿¸ö·Ö×é¶¼¶ÁÈëÒ»¿éÖÁÄÚ´æ */
         {
             uiDBLKNum = GET_CUR_DBLK_NUM(querySelector.uiBasePos, uiSegmentIndex);
             puBlk     = readBlockFromDisk(uiDBLKNum, pBuf);  
@@ -238,42 +249,36 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
             }
             
             record = bGetBLKRecord(uiBBLKNum, GET_CUR_RECORD_INDEX(uiSegmentIndex), pBuf);
-            bSetBLKRecord(uiCompareBBLKNum, uiSegmentIndex, record, pBuf);              /* åˆå§‹åŒ–Compare BLK */
+            bSetBLKRecord(uiCompareBBLKNum, uiSegmentIndex, record, pBuf);              /* ³õÊ¼»¯Compare BLK */
         }
         
 
-        while (!__tpmmsCheckIsOver(uiCompareBBLKNum, uiSegment, pBuf))                  /* åˆ¤æ–­TPMMSæ˜¯å¦ç»“æŸ */
+        while (!__tpmmsCheckIsOver(uiCompareBBLKNum, uiSegment, pBuf))                  /* ÅĞ¶ÏTPMMSÊÇ·ñ½áÊø */
         {
-            if(uiWriteCurIndex == BLK_NRECORD){
-                dWriteBLK(uiWriteBBLKNum, 1, pBuf);                                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-                puWriteBlk      = getNewBlockInBuffer(pBuf);                            /* é‡æ–°ç”³è¯·å†™å…¥å— */
-                uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-                bClearBLK(uiWriteBBLKNum, pBuf);
-                uiWriteCurIndex = 0;
-            }
-                                                                                        /* é€‰æ‹©æœ€å°å€¼æ‰€åœ¨Segmentçš„ç´¢å¼• */
+            WRITE_TILL_BLK_FILL(NULL);
+                                                                                        /* Ñ¡Ôñ×îĞ¡ÖµËùÔÚSegmentµÄË÷Òı */
             uiMaxMinSegmentIndex = __tpmmsSelectMaxMinIndex(uiCompareBBLKNum, uiSegment, querySelector.uiAttrNum, bIsAscend, pBuf);
             if((bIsAscend && uiMaxMinSegmentIndex != INT_MAX) || 
-               (!bIsAscend && uiMaxMinSegmentIndex != INT_MIN)){                        /* å¦‚æœå­˜åœ¨ */
-                record = bGetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, pBuf);   /* è·å–è¯¥ç´¢å¼•å¯¹åº”çš„record */
+               (!bIsAscend && uiMaxMinSegmentIndex != INT_MIN)){                        /* Èç¹û´æÔÚ */
+                record = bGetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, pBuf);   /* »ñÈ¡¸ÃË÷Òı¶ÔÓ¦µÄrecord */
                 
-                bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, record, pBuf);           /* å†™å…¥Write BLKä¸­ */
-                uiWriteCurIndex++;                                                      /* å†™å…¥æŒ‡é’ˆ++ */
+                bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, record, pBuf);           /* Ğ´ÈëWrite BLKÖĞ */
+                uiWriteCurIndex++;                                                      /* Ğ´ÈëÖ¸Õë++ */
 
-                GET_NEXT_RECORD(uiMaxMinSegmentIndex);                                  /* è¯¥Segmentçš„è¯»æŒ‡é’ˆ++ */
-                if(GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex) != BLK_NRECORD){          /* è‹¥æ²¡æœ‰è¯»å®Œ */
-                                                                                        /* ç›´æ¥å°†ä¸‹ä¸€ä¸ªå€¼é€å…¥Compare BLKä¸­ */
+                GET_NEXT_RECORD(uiMaxMinSegmentIndex);                                  /* ¸ÃSegmentµÄ¶ÁÖ¸Õë++ */
+                if(GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex) != BLK_NRECORD){          /* ÈôÃ»ÓĞ¶ÁÍê */
+                                                                                        /* Ö±½Ó½«ÏÂÒ»¸öÖµËÍÈëCompare BLKÖĞ */
                     uiBBLKNum = GET_CUR_BBLK_NUM(uiMaxMinSegmentIndex);
                     record = bGetBLKRecord(uiBBLKNum, GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex), pBuf);
                     bSetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, record, pBuf);
                 }
-                else {                                                                  /* å¦åˆ™ */
-                                                                                        /* é‡Šæ”¾è¯¥Segmentè¯»å…¥çš„å— */
+                else {                                                                  /* ·ñÔò */
+                                                                                        /* ÊÍ·Å¸ÃSegment¶ÁÈëµÄ¿é */
                     uiBBLKNum =  GET_CUR_BBLK_NUM(uiMaxMinSegmentIndex);
                     freeBlockInBuffer(GET_BUF_DATA(pBuf, uiBBLKNum), pBuf);
                     GET_NEXT_DBLK(uiMaxMinSegmentIndex);
-                                                                                        /* è¯»å…¥è¯¥Segmentçš„ä¸‹ä¸€å— */
-                    if(GET_CUR_DBLK_INDEX(uiMaxMinSegmentIndex) != uiNumPerSegment){    /* è‹¥è¯¥Segmentå…·æœ‰ä¸‹ä¸€å— */
+                                                                                        /* ¶ÁÈë¸ÃSegmentµÄÏÂÒ»¿é */
+                    if(GET_CUR_DBLK_INDEX(uiMaxMinSegmentIndex) != uiNumPerSegment){    /* Èô¸ÃSegment¾ßÓĞÏÂÒ»¿é */
                         uiDBLKNum = GET_CUR_DBLK_NUM(querySelector.uiBasePos, uiMaxMinSegmentIndex);
                         puBlk = readBlockFromDisk(uiDBLKNum, pBuf);
                         RESET_CUR_RECORD(uiMaxMinSegmentIndex);   
@@ -301,19 +306,17 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
 
         free(puiBNextIndex);
         free(puiDNextIndex);
-
-        checkBuffer(pBuf);                                                  /* æŸ¥çœ‹I/Oæƒ…å†µ */
     }
 }
 
 
 /**
- * @brief åŸºäºç´¢å¼•çš„çº¿æ€§æœç´¢ 
+ * @brief »ùÓÚË÷ÒıµÄÏßĞÔËÑË÷ 
  * 
- * @param querySelector æœç´¢å™¨
- * @param uiDBLKLowNum ç´¢å¼•æ–‡ä»¶çš„ä½å—å·
- * @param uiDBLKHighNum ç´¢å¼•æ–‡ä»¶çš„é«˜å—å·
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param querySelector ËÑË÷Æ÷
+ * @param uiDBLKLowNum Ë÷ÒıÎÄ¼şµÄµÍ¿éºÅ
+ * @param uiDBLKHighNum Ë÷ÒıÎÄ¼şµÄ¸ß¿éºÅ
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void indexSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum, pBuffer pBuf){
     puChar      puBlk;
@@ -346,7 +349,7 @@ void indexSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHi
             record1 = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
             if(uiIndex == BLK_NRECORD - 1 && i == uiNum - 1){
                 uiDBLKHighBound = TPMMS_S_POS + 32 + 31;
-                uiDBLKLowBound  = record1.attr2;                  /* ç´¢å¼•æ–‡ä»¶Record (Attr, BlockPtr) */
+                uiDBLKLowBound  = record1.attr2;                  /* Ë÷ÒıÎÄ¼şRecord (Attr, BlockPtr) */
                 break;
             }
             else {

@@ -8,10 +8,16 @@
 #ifndef UTILS
 #define UTILS
 
-/* æ˜¾ç¤ºç›¸å…³ */
-#define TIPS_ERROR      "!!![ERROR] ->->-> "
+/* Êä³ö¿ª¹Ø */
+#define OUTPUT_ON
 
-/* å®å˜é‡ç›¸å…³ */
+/* ÏÔÊ¾Ïà¹Ø */ 
+#define TIPS_ERROR           "!!![ERROR] ->->-> "
+#define FONT_COLOR_RED       "\033[31m"
+#define FONT_COLOR_GREEN     "\033[32m"
+#define FONT_COLOR_END       "\033[0m"
+
+/* ºê±äÁ¿Ïà¹Ø */
 #define INVALID_ATTR    -1 
 
 #define TRUE            1
@@ -22,19 +28,19 @@
 
 
 
-/* BUFç›¸å…³ */
+/* BUFÏà¹Ø */
 #define BUF_NBLK            (512 / 64)
 #define BUF_NTAG            8
 #define BUF_SZ              520
 
-/* DISKç›¸å…³ */
+/* DISKÏà¹Ø */
 #define DISK_NBLK           48
 #define DISK_BLK_PER_SZ     64
 
-/* BLKç›¸å…³ */
+/* BLKÏà¹Ø */
 #define BLK_NRECORD         7
 
-/* å…³ç³»ç›¸å…³ */
+/* ¹ØÏµÏà¹Ø */
 #define TABLE_R_NBLK        16
 #define TABLE_R_NRECORD     (TABLE_R_NBLK * BLK_NRECORD)
 #define TABLE_S_NBLK        32       
@@ -55,6 +61,13 @@ typedef Buffer *        pBuffer;
 typedef int             bool;
 typedef int             bError;
 
+/**
+ * @brief ¸ù¾ÝÊôÐÔÁÐÊý»ñÈ¡¼ÇÂ¼ÖÐµÄ¹Ø¼ü×Ö
+ * 
+ * @param record ¼ÇÂ¼
+ * @param uiAttrNum ÊôÐÔÁÐÊý
+ * @return uINT ¹Ø¼ü×ÖÖµ
+ */
 static inline uINT getKeyAttr(record_t record, uINT uiAttrNum){
     switch (uiAttrNum)
     {
@@ -67,9 +80,39 @@ static inline uINT getKeyAttr(record_t record, uINT uiAttrNum){
     }
 }
 
+
+/* general */
+/**
+ * @brief ³õÊ¼»¯Ð´Èë¿é
+ * 
+ */
+#define     INIT_WRITE_BLK()                puWriteBlk              = getNewBlockInBuffer(pBuf);                                          \
+                                            uiWriteBBLKNum          = bConvertBLKAddr2Num(puWriteBlk, pBuf);                              \
+                                            uiWriteCurIndex         = 0;                                                                  \
+                                            bClearBLK(uiWriteBBLKNum, pBuf);                                                              \
+
+/**
+ * @brief µ±Ð´Èë¿éÂú£¬Ð´»Ø´ÅÅÌ£¬²¢Ö´ÐÐ»Øµ÷Óï¾äSTATMENT
+ * 
+ */
+#define     WRITE_TILL_BLK_FILL(STATMENT)   if(uiWriteCurIndex == BLK_NRECORD) {                            /* Ð´ÂúÒ»¸öBLK¾Í¸ÃÐ´Èë´ÅÅÌÁË */ \
+                                                uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);   /* Ð´ÈëºóBuffer»á±»Çå³ý */     \
+                                                INIT_WRITE_BLK()                                                                          \
+                                                STATMENT;                                                                                 \
+                                            }   
+                                            
+#define     INIT_IO_COUNTER()               uINT uiOriginalIOCnt    = pBuf->numIO;
+
+#define     DISPLAY_IO_CNT()                printf("IO¶ÁÐ´¹² %ld ´Î\n", pBuf->numIO - uiOriginalIOCnt);                                                                 
+
+#define     DISPLAY_TIPS(STATMENT)          printf("\n--------------------------------------------------------------------\n");       \
+                                            printf("func [%s] for %s\n", __func__, STATMENT);                                         \
+                                            printf("--------------------------------------------------------------------\n");         \
+
+#define     DISPLAY_RECORD(record)          printf(FONT_COLOR_GREEN "ÕÒµ½¼ÇÂ¼ (%ld, %ld)\n" FONT_COLOR_END, record.attr1, record.attr2);
 /* buftool.c */
 /**
- * @brief èŽ·å– Buffer BLKä¸­ dataçš„èµ·å§‹ä½ç½®ï¼Œå› ä¸ºéœ€è¦è·³è¿‡Validå­—èŠ‚
+ * @brief »ñÈ¡ Buffer BLKÖÐ dataµÄÆðÊ¼Î»ÖÃ£¬ÒòÎªÐèÒªÌø¹ýValid×Ö½Ú
  * 
  */
 #define     GET_BUF_DATA(pBuf, uiBBLKNum) (pBuf->data + (uiBBLKNum - 1) * (DISK_BLK_PER_SZ + 1) + 1)

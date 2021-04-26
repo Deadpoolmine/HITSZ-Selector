@@ -1,18 +1,18 @@
 #include "utils.h"
 
 /**
- * @brief è·å– Buffer BLKä¸­ validå­—èŠ‚
+ * @brief »ñÈ¡ Buffer BLKÖĞ valid×Ö½Ú
  * 
  */
 #define GET_BUF_BLK_VALID(pBuf, uiBBLKNum) *(pBuf->data + (uiBBLKNum - 1) * (DISK_BLK_PER_SZ + 1))
 
 /**
- * @brief åˆ¤æ–­uiBBLKNumæ˜¯å¦åˆæ³•
+ * @brief ÅĞ¶ÏuiBBLKNumÊÇ·ñºÏ·¨
  * 
- * @param uiBBLKNum ä¸åº”è¯¥è¶…è¿‡å·²ç»è¯»å–åˆ°pBufä¸­çš„æ€»ä¸ªæ•°
- * @param pBuf å†…å­˜ç¼“å†²å–
- * @return true åˆæ³•
- * @return false ä¸åˆæ³•
+ * @param uiBBLKNum ²»Ó¦¸Ã³¬¹ıÒÑ¾­¶ÁÈ¡µ½pBufÖĞµÄ×Ü¸öÊı
+ * @param pBuf ÄÚ´æ»º³åÈ¡
+ * @return true ºÏ·¨
+ * @return false ²»ºÏ·¨
  */
 bool checkBBLKNum(uINT uiBBLKNum, pBuffer pBuf){
     if(uiBBLKNum > pBuf->numAllBlk){
@@ -24,9 +24,9 @@ bool checkBBLKNum(uINT uiBBLKNum, pBuffer pBuf){
 }
 
 /**
- * @brief åˆ¤æ–­Buffer BLKå†…éƒ¨ç´¢å¼•æ˜¯å¦åˆæ³•
+ * @brief ÅĞ¶ÏBuffer BLKÄÚ²¿Ë÷ÒıÊÇ·ñºÏ·¨
  * 
- * @param uiIndex å–å€¼åº”è¯¥ä¸º 0 ~ 6
+ * @param uiIndex È¡ÖµÓ¦¸ÃÎª 0 ~ 6
  * @return true 
  * @return false 
  */
@@ -41,23 +41,23 @@ bool checkBIndex(uINT uiIndex){
 
 
 /**
- * @brief å°†Bufferä¸­çš„åœ°å€è½¬æ¢ä¸ºç›¸åº”Bufferä¸­çš„BLKå·
+ * @brief ½«BufferÖĞµÄµØÖ·×ª»»ÎªÏàÓ¦BufferÖĞµÄBLKºÅ
  * 
- * @param puBlk Bufferä¸­çš„åœ°å€ï¼Œå¯é€šè¿‡getNewBufferBLKå¾—åˆ°ï¼Œä¹Ÿ
+ * @param puBlk BufferÖĞµÄµØÖ·£¬¿ÉÍ¨¹ıgetNewBufferBLKµÃµ½£¬Ò²
  * @param pBuf 
- * @return uINT Bufferå†…BLKå· 
+ * @return uINT BufferÄÚBLKºÅ 
  */
 uINT bConvertBLKAddr2Num(puChar puBlk, pBuffer pBuf){
     return ((puBlk - pBuf->data) / (DISK_BLK_PER_SZ + 1)) + 1;
 }
 
 /**
- * @brief è·å–Buffer BLKä¸­çš„ä¸€æ¡è®°å½•ã€‚ï¼ˆæ³¨ï¼šä¸€è¡Œæ•°æ®ï¼Œä¸ä¸€å®šæ˜¯è®°å½•ï¼Œå¤§å°ä¸º 8Bï¼Œå³ä¸¤ä¸ªINTï¼‰
+ * @brief »ñÈ¡Buffer BLKÖĞµÄÒ»Ìõ¼ÇÂ¼¡££¨×¢£ºÒ»ĞĞÊı¾İ£¬²»Ò»¶¨ÊÇ¼ÇÂ¼£¬´óĞ¡Îª 8B£¬¼´Á½¸öINT£©
  * 
- * @param uiBBLKNum Bufferä¸­çš„BLKå·
- * @param uiIndex ç›¸åº”Buffer BLKå†…éƒ¨ç´¢å¼•ï¼ˆåªæœ‰0 ~ 6å¯ç”¨ï¼Œå‰©ä½™ä¸ºå—æŒ‡é’ˆï¼‰
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return record_t è®°å½•ï¼Œ8B
+ * @param uiBBLKNum BufferÖĞµÄBLKºÅ
+ * @param uiIndex ÏàÓ¦Buffer BLKÄÚ²¿Ë÷Òı£¨Ö»ÓĞ0 ~ 6¿ÉÓÃ£¬Ê£ÓàÎª¿éÖ¸Õë£©
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return record_t ¼ÇÂ¼£¬8B
  */
 record_t bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf){
     char               temp[sizeof(int) + 1];
@@ -90,13 +90,13 @@ record_t bGetBLKRecord(uINT uiBBLKNum, uINT uiIndex, pBuffer pBuf){
 }
 
 /**
- * @brief å‘Buffer BLKä¸­çš„uiIndexåœ°æ–¹å†™å…¥record
+ * @brief ÏòBuffer BLKÖĞµÄuiIndexµØ·½Ğ´Èërecord
  * 
- * @param uiBBLKNum Buffer BLKå·
- * @param uiIndex Buffer BLKå†…éƒ¨ç´¢å¼•
- * @param record è¦å†™å…¥çš„è®°å½•
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return bError åˆ†åˆ«æ˜¯ç´¢å¼•é”™è¯¯ã€å†…å­˜å—å·é”™è¯¯ä»¥åŠæ— é”™è¯¯
+ * @param uiBBLKNum Buffer BLKºÅ
+ * @param uiIndex Buffer BLKÄÚ²¿Ë÷Òı
+ * @param record ÒªĞ´ÈëµÄ¼ÇÂ¼
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return bError ·Ö±ğÊÇË÷Òı´íÎó¡¢ÄÚ´æ¿éºÅ´íÎóÒÔ¼°ÎŞ´íÎó
  */
 bError bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf){
     char              temp[sizeof(int) + 1];
@@ -125,10 +125,10 @@ bError bSetBLKRecord(uINT uiBBLKNum, uINT uiIndex, record_t record, pBuffer pBuf
     return BUF_NO_ERROR;
 }
 /**
- * @brief å‘Buffer BLKä¸­å†™å…¥ä¸‹ä¸€å—çš„å€¼
+ * @brief ÏòBuffer BLKÖĞĞ´ÈëÏÂÒ»¿éµÄÖµ
  * 
- * @param uiBBLKNum Buffer BLKå·
- * @return uINT ä¸‹ä¸€å—çš„å€¼
+ * @param uiBBLKNum Buffer BLKºÅ
+ * @return uINT ÏÂÒ»¿éµÄÖµ
  */
 uINT bSetBLKNextBLK(uINT uiBBLKNum, uINT uiDBLKNextNum, pBuffer pBuf){
     char    temp[sizeof(int) + 1];
@@ -144,7 +144,7 @@ uINT bSetBLKNextBLK(uINT uiBBLKNum, uINT uiDBLKNextNum, pBuffer pBuf){
 
 
 /**
- * @brief æ¸…é™¤Buffer BLKä¸­çš„å†…å®¹ï¼ˆå…¨éƒ¨ç½®ä¸º0ï¼‰
+ * @brief Çå³ıBuffer BLKÖĞµÄÄÚÈİ£¨È«²¿ÖÃÎª0£©
  * 
  * @param uiBBLKNum
  * @param pBuf 
@@ -160,9 +160,9 @@ void bClearBLK(uINT uiBBLKNum, pBuffer pBuf){
 
 
 /**
- * @brief æŸ¥çœ‹BufferçŠ¶æ€
+ * @brief ²é¿´Buffer×´Ì¬
  * 
- * @param pBuf ç¼“å†²åŒº 
+ * @param pBuf »º³åÇø 
  */
 void checkBuffer(pBuffer pBuf){
     record_t    record;

@@ -163,7 +163,6 @@ unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
     fclose(fp);
     buf->numFreeBlk--;
     buf->numIO++;
-    //printf("读入磁盘块\n");
     return blkPtr;
 }
 /**

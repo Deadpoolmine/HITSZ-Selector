@@ -1,7 +1,7 @@
 #include "utils.h"
 
 
-/* ç£ç›˜æ•°æ®æ®µç›¸å…³ */
+/* ´ÅÅÌÊı¾İ¶ÎÏà¹Ø */
 #define LINEAR_SEARCH_POS   100
 #define INDEX_FILE_POS      2000
 #define INDEX_SEARCH_POS    3000
@@ -13,7 +13,7 @@ typedef struct querySelector
     uINT    uiAttrNum;
     uINT    uiValue;
     /**
-     * @brief ç”¨äºè®°å½•åŸºå‡†åœ°å€ï¼ˆtmppså¸¦æœ‰ä¸­é—´ç»“æœï¼‰
+     * @brief ÓÃÓÚ¼ÇÂ¼»ù×¼µØÖ·£¨tmpps´øÓĞÖĞ¼ä½á¹û£©
      */
     uINT    uiBasePos;
 } querySelector_t;

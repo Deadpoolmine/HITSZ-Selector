@@ -1,13 +1,13 @@
 #include "utils.h"
 
 /**
- * @brief å°†Bufferä¸­BLKå·uiBBLKLowNumåˆ°uiBBLKHighNumçš„BLKæŒ‰ç…§æŸç§æ–¹å¼æ’åº
+ * @brief ½«BufferÖĞBLKºÅuiBBLKLowNumµ½uiBBLKHighNumµÄBLK°´ÕÕÄ³ÖÖ·½Ê½ÅÅĞò
  * 
- * @param uiBBLKLowNum Buffer BLKä½å—å· 
- * @param uiBBLKHighNum Buffer BLKé«˜å—å·
- * @param bIsAscend æ˜¯å¦å‡åºæ’åˆ—
- * @param uiAttrNum åŸºäºå“ªä¸ªå­—æ®µ
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param uiBBLKLowNum Buffer BLKµÍ¿éºÅ 
+ * @param uiBBLKHighNum Buffer BLK¸ß¿éºÅ
+ * @param bIsAscend ÊÇ·ñÉıĞòÅÅÁĞ
+ * @param uiAttrNum »ùÓÚÄÄ¸ö×Ö¶Î
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void sortInBuf(uINT uiBBLKLowNum, uINT uiBBLKHighNum, bool bIsAscend, uINT uiAttrNum, pBuffer pBuf){
     uINT        uiNum;
@@ -39,21 +39,21 @@ void sortInBuf(uINT uiBBLKLowNum, uINT uiBBLKHighNum, bool bIsAscend, uINT uiAtt
             {
                 for (uiIndexj = 0; uiIndexj < BLK_NRECORD; uiIndexj++)
                 {
-                    if(!(uiBBLKNumi == uiBBLKNumj && uiIndexi == uiIndexj)){            /* ä¿è¯é‡å¤è®¡ç®— */
+                    if(!(uiBBLKNumi == uiBBLKNumj && uiIndexi == uiIndexj)){            /* ±£Ö¤ÖØ¸´¼ÆËã */
                         recordi = bGetBLKRecord(uiBBLKNumi, uiIndexi, pBuf);
                         recordj = bGetBLKRecord(uiBBLKNumj, uiIndexj, pBuf);
                         
                         uiKeyi  = getKeyAttr(recordi, uiAttrNum);
                         uiKeyj  = getKeyAttr(recordj, uiAttrNum);
 
-                        if(bIsAscend){                                                  /* å‡åºæ’åˆ— */
+                        if(bIsAscend){                                                  /* ÉıĞòÅÅÁĞ */
                             if(uiKeyi < uiKeyj){
                                 bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
                                 bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
                             }
                         }
                         else {
-                            if(uiKeyi > uiKeyj){                                        /* é™åºæ’åˆ— */
+                            if(uiKeyi > uiKeyj){                                        /* ½µĞòÅÅÁĞ */
                                 bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
                                 bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
                             }

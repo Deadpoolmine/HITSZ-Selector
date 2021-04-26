@@ -5,8 +5,8 @@
 uINT _G_DBLKNextAvailableNum;
 
 /**
- * @brief åˆå§‹åŒ–ç£ç›˜å·¥å…·ï¼š
- *        1. åˆå§‹åŒ–ä¸‹ä¸€ä¸ªç£ç›˜æ¬²å†™å…¥çš„å—å—å·
+ * @brief ³õÊ¼»¯´ÅÅÌ¹¤¾ß£º
+ *        1. ³õÊ¼»¯ÏÂÒ»¸ö´ÅÅÌÓûĞ´ÈëµÄ¿é¿éºÅ
  * 
  */
 void initDTool(){
@@ -59,18 +59,18 @@ void initDTool(){
 }
 
 /**
- * @brief è·å–ä¸‹ä¸€ä¸ªç£ç›˜æ¬²å†™å…¥çš„å—å—å·ï¼Œå¹¶ä½¿ä¹‹ !!å¢ä¸€
+ * @brief »ñÈ¡ÏÂÒ»¸ö´ÅÅÌÓûĞ´ÈëµÄ¿é¿éºÅ£¬²¢Ê¹Ö® !!ÔöÒ»
  * 
- * @return uINT é‡ç½®åçš„å—å·
+ * @return uINT ÖØÖÃºóµÄ¿éºÅ
  */
 uINT dGetBLKNextGlobNum(){
     return _G_DBLKNextAvailableNum++;
 }
 
 /**
- * @brief é‡ç½®ä¸‹ä¸€ä¸ªç£ç›˜æ¬²å†™å…¥çš„å—å—å·ä¸ºå½“å‰æœ€å¤§å—å·åä¸€ä¸ª
+ * @brief ÖØÖÃÏÂÒ»¸ö´ÅÅÌÓûĞ´ÈëµÄ¿é¿éºÅÎªµ±Ç°×î´ó¿éºÅºóÒ»¸ö
  * 
- * @return uINT é‡ç½®åçš„å—å·
+ * @return uINT ÖØÖÃºóµÄ¿éºÅ
  */
 uINT dResetGlobNextBLKNum(){
     initDTool();
@@ -78,21 +78,21 @@ uINT dResetGlobNextBLKNum(){
 }
 
 /**
- * @brief è®¾ç½®ä¸‹ä¸€ä¸ªç£ç›˜æ¬²å†™å…¥çš„å—
+ * @brief ÉèÖÃÏÂÒ»¸ö´ÅÅÌÓûĞ´ÈëµÄ¿é
  * 
- * @param uiDBLKNum è®¾ç½®ä¸‹ä¸€ä¸ªæ¬²å†™å…¥çš„å—çš„å—å· 
+ * @param uiDBLKNum ÉèÖÃÏÂÒ»¸öÓûĞ´ÈëµÄ¿éµÄ¿éºÅ 
  */
 void dSetGlobNextBLKNum(uINT uiDBLKNum){
     _G_DBLKNextAvailableNum = uiDBLKNum;
 }
 
 /**
- * @brief å‘ç£ç›˜å†™å…¥Bufferä¸­çš„æ•°æ®å—ï¼Œå†™å…¥åï¼Œè¿™äº›å—è¢«é‡Šæ”¾
+ * @brief Ïò´ÅÅÌĞ´ÈëBufferÖĞµÄÊı¾İ¿é£¬Ğ´Èëºó£¬ÕâĞ©¿é±»ÊÍ·Å
  * 
- * @param uiBBLKNum Buffer BLKå·
- * @param uiNum è¿ç»­å†™å…¥uiNumä¸ªå—
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return uINT æœ€åä¸€æ¬¡å†™å…¥çš„å—å·
+ * @param uiBBLKNum Buffer BLKºÅ
+ * @param uiNum Á¬ĞøĞ´ÈëuiNum¸ö¿é
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return uINT ×îºóÒ»´ÎĞ´ÈëµÄ¿éºÅ
  */
 uINT dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf){
     uINT    uiDBLKNextNum; 
@@ -117,16 +117,20 @@ uINT dWriteBLK(uINT uiBBLKNum, uINT uiNum, pBuffer pBuf){
 }
 
 /**
- * @brief æŸ¥çœ‹ç£ç›˜ä¸Šçš„å—ä¿¡æ¯
+ * @brief ²é¿´´ÅÅÌÉÏµÄ¿éĞÅÏ¢
  * 
- * @param uiDBLKLowNum ç£ç›˜ä¸Šä½å—å·
- * @param uiDBLKHighNum ç£ç›˜ä¸Šé«˜å—å·
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param uiDBLKLowNum ´ÅÅÌÉÏµÍ¿éºÅ
+ * @param uiDBLKHighNum ´ÅÅÌÉÏ¸ß¿éºÅ
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void dCheckBLKs(uINT uiDBLKLowNum,uINT uiDBLKHighNum, pBuffer pBuf){
     puChar      puBlk;
     uINT        uiNum;
 
+#ifdef OUTPUT_ON
+    printf("\n\n¿é[%ld, %ld]ĞÅÏ¢¼ÇÂ¼:\n\n", uiDBLKLowNum, uiDBLKHighNum);
+#endif // OUTPUT_ON
+    
     uiNum = uiDBLKHighNum - uiDBLKLowNum + 1;
     for (size_t i = 0; i < uiNum; i++)
     {
@@ -142,9 +146,9 @@ void dCheckBLKs(uINT uiDBLKLowNum,uINT uiDBLKHighNum, pBuffer pBuf){
     }
 }
 /**
- * @brief æŸ¥çœ‹å…³ç³»Rå’ŒSå…³ç³»
+ * @brief ²é¿´¹ØÏµRºÍS¹ØÏµ
  * 
- * @param pBuf å†…å­˜è¯»å–ç¼“å†²åŒº
+ * @param pBuf ÄÚ´æ¶ÁÈ¡»º³åÇø
  */
 void dCheckTables(pBuffer pBuf) {
     printf("\n------------------------------Table R:------------------------------\n");
@@ -155,10 +159,10 @@ void dCheckTables(pBuffer pBuf) {
 }
 
 /**
- * @brief æŸ¥çœ‹TPMMSçš„Så…³ç³»
+ * @brief ²é¿´TPMMSµÄS¹ØÏµ
  * 
- * @param uiTPMMSRes ä¼ å…¥TPMMS_S_POS
- * @param pBuf å†…å­˜ç¼“å†²åŒº
+ * @param uiTPMMSRes ´«ÈëTPMMS_S_POS
+ * @param pBuf ÄÚ´æ»º³åÇø
  */
 void dCheckTpmmsS(uINT uiTPMMSRes, pBuffer pBuf){
     printf("\n------------------------------Table S After TPMMS:------------------------------\n");
@@ -166,13 +170,13 @@ void dCheckTpmmsS(uINT uiTPMMSRes, pBuffer pBuf){
 }
 
 /**
- * @brief æ£€æµ‹ç£ç›˜å—[uiDBLKLowNum, uiDBLKHighNum]åŸºäºå±æ€§æ˜¯å¦æ’åº
+ * @brief ¼ì²â´ÅÅÌ¿é[uiDBLKLowNum, uiDBLKHighNum]»ùÓÚÊôĞÔÊÇ·ñÅÅĞò
  * 
- * @param uiDBLKLowNum ç£ç›˜å—ä½å—å·
- * @param uiDBLKHighNum ç£ç›˜å—é«˜å—å·
- * @param uiAttrNum åŸºäºå±æ€§
- * @return true å·²æ’åº
- * @return false æœªæ’åº
+ * @param uiDBLKLowNum ´ÅÅÌ¿éµÍ¿éºÅ
+ * @param uiDBLKHighNum ´ÅÅÌ¿é¸ß¿éºÅ
+ * @param uiAttrNum »ùÓÚÊôĞÔ
+ * @return true ÒÑÅÅĞò
+ * @return false Î´ÅÅĞò
  */
 bool __dCheckIsSort(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, pBuffer pBuf){
     uINT        uiNum;
@@ -253,15 +257,15 @@ bool __dCheckIsSort(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, pBuffe
     return bIsSort;
 }
 /**
- * @brief ä¸ºç£ç›˜å—[uiDBLKLowNum, uiDBLKHighNum]å»ºç«‹ç´¢å¼•æ–‡ä»¶
+ * @brief Îª´ÅÅÌ¿é[uiDBLKLowNum, uiDBLKHighNum]½¨Á¢Ë÷ÒıÎÄ¼ş
  * 
- * @param uiDBLKLowNum ç£ç›˜å—ä½å—å·
- * @param uiDBLKHighNum ç£ç›˜å—é«˜å—å·
- * @param uiAttrNum ç´¢å¼•åˆ’åˆ†åŸºäºå±æ€§
- * @param uiGap ç´¢å¼•å—ä¸ç´¢å¼•å—é—´çš„é—´è·
- * @param puiNum ç´¢å¼•æ–‡ä»¶å ç”¨å¤šå°‘ç£ç›˜å—
- * @param pBuf å†…å­˜ç¼“å†²åŒº
- * @return uINT ç´¢å¼•æ–‡ä»¶èµ·å§‹å—å·
+ * @param uiDBLKLowNum ´ÅÅÌ¿éµÍ¿éºÅ
+ * @param uiDBLKHighNum ´ÅÅÌ¿é¸ß¿éºÅ
+ * @param uiAttrNum Ë÷Òı»®·Ö»ùÓÚÊôĞÔ
+ * @param uiGap Ë÷Òı¿éÓëË÷Òı¿é¼äµÄ¼ä¾à
+ * @param puiNum Ë÷ÒıÎÄ¼şÕ¼ÓÃ¶àÉÙ´ÅÅÌ¿é
+ * @param pBuf ÄÚ´æ»º³åÇø
+ * @return uINT Ë÷ÒıÎÄ¼şÆğÊ¼¿éºÅ
  */
 uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT uiGap, uINT *puiNum, pBuffer pBuf){
     querySelector_t         querySelector;
@@ -278,6 +282,8 @@ uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT 
     uINT                    uiBBLKNum;
     
     uINT                    BuiBLKPerGap;                    
+
+    DISPLAY_TIPS("Îª¾­¹ıTPMMSÅÅĞòºóµÄ¹ØÏµS½¨Á¢Ë÷ÒıÎÄ¼ş\nË÷ÒıÎÄ¼şÎ»ÓÚ´ÅÅÌ¿é2000");
 
     if(!__dCheckIsSort(uiDBLKLowNum, uiDBLKHighNum, uiAttrNum, pBuf)){
         dSetGlobNextBLKNum(TPMMS_S_POS);
@@ -299,8 +305,8 @@ uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT 
     for (size_t i = 0; i < BuiBLKPerGap; i++)
     {
         if(uiWriteCurIndex == BLK_NRECORD){
-            dWriteBLK(uiWriteBBLKNum, 1, pBuf);                                     /* å†™å…¥åBufferä¼šè¢«æ¸…é™¤ */
-            puWriteBlk      = getNewBlockInBuffer(pBuf);                            /* é‡æ–°ç”³è¯·å†™å…¥å— */
+            dWriteBLK(uiWriteBBLKNum, 1, pBuf);                                     /* Ğ´ÈëºóBuffer»á±»Çå³ı */
+            puWriteBlk      = getNewBlockInBuffer(pBuf);                            /* ÖØĞÂÉêÇëĞ´Èë¿é */
             uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
             bClearBLK(uiWriteBBLKNum, pBuf);
             uiWriteCurIndex = 0;
