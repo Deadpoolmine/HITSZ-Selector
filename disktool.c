@@ -127,9 +127,7 @@ void dCheckBLKs(uINT uiDBLKLowNum,uINT uiDBLKHighNum, pBuffer pBuf){
     puChar      puBlk;
     uINT        uiNum;
 
-#ifdef OUTPUT_ON
-    printf("\n\n块[%ld, %ld]信息记录:\n\n", uiDBLKLowNum, uiDBLKHighNum);
-#endif // OUTPUT_ON
+    printf(FONT_COLOR_GREEN "块[%ld, %ld]信息记录:\n\n" FONT_COLOR_END, uiDBLKLowNum, uiDBLKHighNum);
     
     uiNum = uiDBLKHighNum - uiDBLKLowNum + 1;
     for (size_t i = 0; i < uiNum; i++)
@@ -144,6 +142,9 @@ void dCheckBLKs(uINT uiDBLKLowNum,uINT uiDBLKHighNum, pBuffer pBuf){
         printf("\n");
         freeBlockInBuffer(puBlk, pBuf);
     }
+    for(int i = 0; i < MAX_DISPLAY; i++) 
+        printf("-");                                       
+    printf("\n");
 }
 /**
  * @brief 查看关系R和S关系
@@ -281,10 +282,9 @@ uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT 
     puChar                  puBlk;
     uINT                    uiBBLKNum;
     
-    uINT                    BuiBLKPerGap;                    
+    uINT                    uiBLKPerGap;                    
 
-    DISPLAY_TIPS("为经过TPMMS排序后的关系S建立索引文件\n索引文件位于磁盘块2000");
-
+    DISPLAY_TIPS("为经过TPMMS排序后的关系S建立索引文，索引文件位于磁盘块2000");
     if(!__dCheckIsSort(uiDBLKLowNum, uiDBLKHighNum, uiAttrNum, pBuf)){
         dSetGlobNextBLKNum(TPMMS_S_POS);
         querySelector.uiAttrNum = 1;
@@ -292,32 +292,23 @@ uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT 
         tpmms(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, FALSE, pBuf);
     }
 
+    INIT_IO_COUNTER();
     dSetGlobNextBLKNum(INDEX_FILE_POS);
 
     uiNum           = uiDBLKHighNum - uiDBLKLowNum + 1;
-    BuiBLKPerGap    = uiNum / uiGap;    
+    uiBLKPerGap    = uiNum / uiGap;    
 
-    puWriteBlk      = getNewBlockInBuffer(pBuf);
-    uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-    uiWriteCurIndex = 0;
-    bClearBLK(uiWriteBBLKNum, pBuf);
+    INIT_WRITE_BLK();
 
-    for (size_t i = 0; i < BuiBLKPerGap; i++)
+    for (size_t i = 0; i < uiBLKPerGap; i++)
     {
-        if(uiWriteCurIndex == BLK_NRECORD){
-            dWriteBLK(uiWriteBBLKNum, 1, pBuf);                                     /* 写入后Buffer会被清除 */
-            puWriteBlk      = getNewBlockInBuffer(pBuf);                            /* 重新申请写入块 */
-            uiWriteBBLKNum  = bConvertBLKAddr2Num(puWriteBlk, pBuf);
-            bClearBLK(uiWriteBBLKNum, pBuf);
-            uiWriteCurIndex = 0;
-            *puiNum++;
-        }
+        WRITE_TILL_BLK_FILL(*puiNum++);
+        
         puBlk       = readBlockFromDisk(uiDBLKLowNum + i * uiGap, pBuf);
         uiBBLKNum   = bConvertBLKAddr2Num(puBlk, pBuf);
         record      = bGetBLKRecord(uiBBLKNum, 0, pBuf);
 
         recordIndex.attr1 = getKeyAttr(record, uiAttrNum);
-
         recordIndex.attr2 = uiDBLKLowNum + i * uiGap;
         bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordIndex, pBuf);
         freeBlockInBuffer(puBlk, pBuf);
@@ -333,11 +324,15 @@ uINT dBuildIndexFile(uINT uiDBLKLowNum,uINT uiDBLKHighNum, uINT uiAttrNum, uINT 
             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordIndex, pBuf);
             uiWriteCurIndex++;
         }
-        dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+        uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+#ifdef  OUTPUT_DETAIL_ON
+        printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1);
+#endif //  OUTPUT_DETAIL_ON
     }
     else {
         freeBlockInBuffer(puWriteBlk, pBuf);
     }
     
-    checkBuffer(pBuf);
+    //checkBuffer(pBuf);
+    DISPLAY_IO_CNT();
 }

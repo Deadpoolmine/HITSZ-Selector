@@ -61,20 +61,22 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     uiOpCnt = 0;
     querySelector.uiAttrNum = mergerOptions.uiAttrNumR;
     querySelector.uiBasePos = SM_TEMP_R_POS;
+    GENERATE_TIPS("merge前先利用TPMMS对关系R排序");
     dSetGlobNextBLKNum(SM_TEMP_R_POS);
     tpmms(querySelector, uiDBLKLowNumR, uiDBLKHighNumR, TRUE, pBuf);
 
     querySelector.uiAttrNum = mergerOptions.uiAttrNumS;
     querySelector.uiBasePos = SM_TEMP_S_POS;
+    GENERATE_TIPS("merge前先利用TPMMS对关系S排序");
     dSetGlobNextBLKNum(SM_TEMP_S_POS);
     tpmms(querySelector, uiDBLKLowNumS, uiDBLKHighNumS, TRUE, pBuf);        /* 升序排列 */
 
     dSetGlobNextBLKNum(SM_POS);
     INIT_WRITE_BLK();
+    INIT_IO_COUNTER();
 
     uiDBLKNumS = SM_TEMP_S_POS + TABLE_S_NBLK;
     uiDBLKNumR = SM_TEMP_R_POS + TABLE_R_NBLK;
-    
     // printf("--------\n");
     // dCheckBLKs(uiDBLKNumS, uiDBLKNumS + 31, pBuf);
     // printf("--------\n");
@@ -110,13 +112,11 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                             
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                             uiWriteCurIndex++;
-                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
-                                                printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
 
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordR, pBuf);
                             uiWriteCurIndex++;
-                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
-                                                printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
                         }
                         else if(uiKeyR > uiKeyS){                                        /* R排了序，可以直接跳过了 */
                             bCanBreak = TRUE;
@@ -130,8 +130,7 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                             bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                             uiWriteCurIndex++;
                             
-                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
-                                                printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
                             bCanBreak = TRUE;
                         }
                         else if(uiKeyR > uiKeyS) {
@@ -173,8 +172,7 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordS, pBuf);
                     uiWriteCurIndex++;
                 
-                    WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
-                                        printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                    WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
                 }
                     break;
                 default:
@@ -198,8 +196,7 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                 bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordR, pBuf);
                 uiWriteCurIndex++;
                 
-                WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1; 
-                                    printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+                WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
                 
                 freeBlockInBuffer(puBlkR, pBuf);
             }
@@ -209,12 +206,14 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     if(uiWriteCurIndex != 0) {
         uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);
         *puiNum = *puiNum + 1; 
+#ifdef  OUTPUT_DETAIL_ON
         printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1);
+#endif //  OUTPUT_DETAIL_ON
     }
     else {
         freeBlockInBuffer(puWriteBlk, pBuf);
     }
-
-    checkBuffer(pBuf);
+    DISPLAY_IO_CNT();
+    //checkBuffer(pBuf);
     return uiOpCnt;
 }

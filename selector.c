@@ -36,7 +36,7 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
     uINT        uiRecordNum;
 
     
-    DISPLAY_TIPS("基于线性搜索的选择算法 - S.C = 50");
+    DISPLAY_TIPS(querySelector.cTips);
     uiNum               = uiDBLKHighNum - uiDBLKLowNum + 1;
     uiRecordNum         = 0;
     INIT_IO_COUNTER();
@@ -46,13 +46,13 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
     {
         puBlk = readBlockFromDisk(uiDBLKLowNum + i, pBuf);              /* 读一块至内存 */
         uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
-#ifdef OUTPUT_ON
+#ifdef  OUTPUT_DETAIL_ON
         printf("读入数据块 %ld\n", uiDBLKLowNum + i);
-#endif // OUTPUT_ON
+#endif //  OUTPUT_DETAIL_ON
         for (uINT uiIndex = 0; uiIndex < BLK_NRECORD; uiIndex++)
         {
             record = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
-            WRITE_TILL_BLK_FILL(printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1));
+            WRITE_TILL_BLK_FILL(NULL);
             switch (querySelector.uiAttrNum)
             {
             case 1:{
@@ -60,9 +60,7 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
                     uiWriteCurIndex++;     
                     uiRecordNum++;
-#ifdef OUTPUT_ON
-                    DISPLAY_RECORD(record);      
-#endif // OUTPUT_ON
+                    DISPLAY_RECORD(record); 
                 }
             }
                 break;
@@ -71,9 +69,7 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
                     bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
                     uiWriteCurIndex++;
                     uiRecordNum++;
-#ifdef OUTPUT_ON
                     DISPLAY_RECORD(record);      
-#endif // OUTPUT_ON
                 }
             }
                 break;
@@ -85,18 +81,18 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
     }
     if(uiWriteCurIndex != 0) {
         uINT uiNextWriteBLK = dWriteBLK(uiWriteBBLKNum, 1, pBuf);
-#ifdef OUTPUT_ON
+#ifdef  OUTPUT_DETAIL_ON
         printf(FONT_COLOR_RED "结果写入磁盘块 %ld \n" FONT_COLOR_END, uiNextWriteBLK - 1);
-#endif // OUTPUT_ON
+#endif //  OUTPUT_DETAIL_ON
     }
     else {
         freeBlockInBuffer(puWriteBlk, pBuf);
     }
     
-#ifdef OUTPUT_ON
+#ifdef OUTPUT_DETAIL_ON
     printf("满足条件的元组共 %ld 个\n", uiRecordNum);
+#endif // OUTPUT_DETAIL_ON
     DISPLAY_IO_CNT();
-#endif // OUTPUT_ON
 }
 
 /**
@@ -202,6 +198,8 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
     uiNum = uiDBLKHighNum - uiDBLKLowNum + 1;
     uiBaseSegmentBBLKNum = -1;
     
+    DISPLAY_TIPS(querySelector.cTips);
+
     if(uiNum < BUF_NBLK * BUF_NBLK){                                /* 两阶段二路归并排序 */
         uiNumPerSegment = BUF_NBLK;                                 /* 每组8个块 */
         uiSegment = uiNum / uiNumPerSegment;                        /* 分成uiSegment组 */
@@ -330,7 +328,9 @@ void indexSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHi
     record_t    record1;
     record_t    record2;
     uINT        uiKey;
-    
+
+    DISPLAY_TIPS(querySelector.cTips);
+    INIT_IO_COUNTER();
     uiNum = uiDBLKHighNum - uiDBLKLowNum + 1;
     
 
@@ -344,6 +344,9 @@ void indexSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHi
     {
         puBlk       = readBlockFromDisk(uiDBLKLowNum + i, pBuf);
         uiBBLKNum   = bConvertBLKAddr2Num(puBlk, pBuf);
+#ifdef  OUTPUT_DETAIL_ON
+        printf(FONT_COLOR_PURPLE "读入索引块 %ld\n" FONT_COLOR_END, uiDBLKLowNum + i);
+#endif //  OUTPUT_DETAIL_ON
         for (uINT uiIndex = 0; uiIndex < BLK_NRECORD; uiIndex++)
         {
             record1 = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
@@ -367,5 +370,11 @@ void indexSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHi
         }
         freeBlockInBuffer(puBlk, pBuf);
     }
+
+#ifdef  OUTPUT_DETAIL_ON
+        printf(FONT_COLOR_GREEN "找到边界块 [%ld, %ld]\n" FONT_COLOR_END, uiDBLKLowBound, uiDBLKHighBound);
+#endif //  OUTPUT_DETAIL_ON
+    GENERATE_TIPS("利用索引文件找到的边界结果进行线性搜索 - S.C = 50")
     linearSearch(querySelector, uiDBLKLowBound, uiDBLKHighBound, pBuf);
+    DISPLAY_IO_CNT();
 }

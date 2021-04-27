@@ -20,14 +20,13 @@ int main(int argc, char const *argv[])
     }
     pBuf = &buf;
 
-#ifdef OUTPUT_ON
     system("cls");
-#endif // OUTPUT_ON
 
     dSetGlobNextBLKNum(LINEAR_SEARCH_POS);
     querySelector.uiAttrNum = 1;                /* 选择第一个属性，也就是S.C */
     querySelector.uiValue   = 50;               /* S.C = 50 */
     querySelector.uiBasePos = LINEAR_SEARCH_POS;
+    GENERATE_TIPS("基于线性搜索的选择算法 - S.C = 50");
     linearSearch(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, pBuf);      
     dCheckBLKs(100, 101, pBuf);
 
@@ -36,16 +35,18 @@ int main(int argc, char const *argv[])
     querySelector.uiAttrNum = 1;
     querySelector.uiValue   = INVALID_ATTR;
     querySelector.uiBasePos = TPMMS_S_POS;
+    GENERATE_TIPS("利用TPMMS为关系S排序");
     tpmms(querySelector, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, FALSE, pBuf);
-    dCheckBLKs(TPMMS_S_POS + TABLE_S_NBLK, TPMMS_S_POS + TABLE_S_NBLK + TABLE_S_NBLK - 1, pBuf);
+    // dCheckBLKs(TPMMS_S_POS + TABLE_S_NBLK, TPMMS_S_POS + TABLE_S_NBLK + TABLE_S_NBLK - 1, pBuf);
 
     /* TPMMS FOR R */
     dSetGlobNextBLKNum(TPMMS_R_POS);
     querySelector.uiAttrNum = 1;
     querySelector.uiValue   = INVALID_ATTR;
     querySelector.uiBasePos = TPMMS_R_POS; 
+    GENERATE_TIPS("利用TPMMS为关系R排序");
     tpmms(querySelector, 1, TABLE_R_NBLK, FALSE, pBuf);
-    dCheckBLKs(TPMMS_R_POS + TABLE_R_NBLK, TPMMS_R_POS + TABLE_R_NBLK + TABLE_R_NBLK - 1, pBuf);
+    // dCheckBLKs(TPMMS_R_POS + TABLE_R_NBLK, TPMMS_R_POS + TABLE_R_NBLK + TABLE_R_NBLK - 1, pBuf);
 
     /* Build Index File */
     uiNum = 0;
@@ -55,9 +56,10 @@ int main(int argc, char const *argv[])
 
     /* Index Search */
     dSetGlobNextBLKNum(INDEX_SEARCH_POS);
-    querySelector.uiAttrNum = 1;             /* 选择第一个属性，也就是S.C */
-    querySelector.uiValue   = 50;              /* S.C = 50 */
+    querySelector.uiAttrNum = 1;                /* 选择第一个属性，也就是S.C */
+    querySelector.uiValue   = 50;               /* S.C = 50 */
     querySelector.uiBasePos = INDEX_SEARCH_POS;
+    GENERATE_TIPS("利用关系S的索引文件进行 S.C = 50 的搜索，这里找到边界后用线性搜索即可");
     indexSearch(querySelector, INDEX_FILE_POS, INDEX_FILE_POS + uiNum, pBuf);
     dCheckBLKs(3000, 3001, pBuf);
     
@@ -69,7 +71,7 @@ int main(int argc, char const *argv[])
     mergerOptions.mergerType = JOIN;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
-    printf("总共连接: %ld 次\n", uiOpCnt);
+    printf(FONT_COLOR_GREEN "\n总共连接: %ld 次\n" FONT_COLOR_END, uiOpCnt);
 
     /* 交操作 */
     uiNum = 0;
@@ -78,7 +80,7 @@ int main(int argc, char const *argv[])
     mergerOptions.mergerType = INTER;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
-    printf("S和R的交集共 %ld 个元组\n", uiOpCnt);
+    printf(FONT_COLOR_GREEN "\nS和R的交集共 %ld 个元组\n" FONT_COLOR_END, uiOpCnt);
 
 
     /* 并操作 */
@@ -88,7 +90,7 @@ int main(int argc, char const *argv[])
     mergerOptions.mergerType = UNION;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
-    printf("S和R的并集共 %ld 个元组\n", uiOpCnt);
+    printf(FONT_COLOR_GREEN "\nS和R的并集共 %ld 个元组\n" FONT_COLOR_END, uiOpCnt);
 
 
     /* 差操作 */
@@ -98,7 +100,7 @@ int main(int argc, char const *argv[])
     mergerOptions.mergerType = DIFF;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
-    printf("S和R的差集共 %ld 个元组\n", uiOpCnt);
+    printf(FONT_COLOR_GREEN "\nS和R的差集共 %ld 个元组\n" FONT_COLOR_END, uiOpCnt);
     
 #ifndef TEST
     /* LinearSearch */

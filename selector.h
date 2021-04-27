@@ -16,6 +16,7 @@ typedef struct querySelector
      * @brief 用于记录基准地址（tmpps带有中间结果）
      */
     uINT    uiBasePos;
+    char    cTips[MAX_DISPLAY];
 } querySelector_t;
 
 
