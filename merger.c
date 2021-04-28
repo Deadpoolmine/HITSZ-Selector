@@ -33,6 +33,8 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     record_t                recordR;
     uINT                    uiKeyR;
 
+    uINT                    uiDBLKNumLastR;            /* R与S第一个可比块 - 优化器 */
+
     bool                    bCanBreak;
     bool                    bHasSame;
     uINT                    uiOpCnt;
@@ -74,6 +76,7 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     dSetGlobNextBLKNum(SM_POS);
     INIT_WRITE_BLK();
     INIT_IO_COUNTER();
+    uiDBLKNumLastR = 0;
 
     uiDBLKNumS = SM_TEMP_S_POS + TABLE_S_NBLK;
     uiDBLKNumR = SM_TEMP_R_POS + TABLE_R_NBLK;
@@ -92,12 +95,15 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
             recordS    = bGetBLKRecord(uiBBLKNumS, uiIndexS, pBuf);
             uiKeyS     = getKeyAttr(recordS, mergerOptions.uiAttrNumS);
 
-            bCanBreak  = FALSE;
+            bCanBreak  = FALSE;                 /* 是否读S的下一条记录 */
             bHasSame   = FALSE;
 
             for (size_t j = 0; j < TABLE_R_NBLK; j++)
             {
                 uiDBLKNumR = SM_TEMP_R_POS + TABLE_R_NBLK + j;
+                if(uiDBLKNumR < uiDBLKNumLastR){                            /* 直接跳到第一个可比块 */
+                    continue;
+                }
                 for (uINT uiIndexR = 0; uiIndexR < BLK_NRECORD; uiIndexR++)
                 {
                     puBlkR      = readBlockFromDisk(uiDBLKNumR, pBuf);
@@ -121,6 +127,10 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                         else if(uiKeyR > uiKeyS){                                        /* R排了序，可以直接跳过了 */
                             bCanBreak = TRUE;
                         }
+                        else if(uiKeyR < uiKeyS){
+                            if(mergerOptions.bIsOptimise)
+                                uiDBLKNumLastR = uiDBLKNumR;
+                        }
                     }
                         break;
                     case INTER:{
@@ -136,6 +146,10 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                         else if(uiKeyR > uiKeyS) {
                             bCanBreak = TRUE;
                         }
+                        else if(uiKeyR < uiKeyS){
+                            if(mergerOptions.bIsOptimise)
+                                uiDBLKNumLastR = uiDBLKNumR;
+                        }
                     }
                         break;
                     case UNION:
@@ -146,6 +160,10 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
                         }
                         else if(uiKeyR > uiKeyS){
                             bCanBreak   = TRUE;
+                        }
+                        else if(uiKeyR < uiKeyS){
+                            if(mergerOptions.bIsOptimise)
+                                uiDBLKNumLastR = uiDBLKNumR;
                         }
                     }
                         break;

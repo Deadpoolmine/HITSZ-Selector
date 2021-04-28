@@ -66,8 +66,10 @@ int main(int argc, char const *argv[])
     /* 连接操作 */
     uiNum = 0;
     mergerOptions_t mergerOptions;
+    mergerOptions.bIsOptimise = TRUE;
     mergerOptions.uiAttrNumR = 1;
     mergerOptions.uiAttrNumS = 1;
+
     mergerOptions.mergerType = JOIN;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
@@ -75,8 +77,6 @@ int main(int argc, char const *argv[])
 
     /* 交操作 */
     uiNum = 0;
-    mergerOptions.uiAttrNumR = 1;
-    mergerOptions.uiAttrNumS = 1;
     mergerOptions.mergerType = INTER;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
@@ -85,8 +85,6 @@ int main(int argc, char const *argv[])
 
     /* 并操作 */
     uiNum = 0;
-    mergerOptions.uiAttrNumR = 1;
-    mergerOptions.uiAttrNumS = 1;
     mergerOptions.mergerType = UNION;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);
@@ -95,8 +93,6 @@ int main(int argc, char const *argv[])
 
     /* 差操作 */
     uiNum = 0;
-    mergerOptions.uiAttrNumR = 1;
-    mergerOptions.uiAttrNumS = 1;
     mergerOptions.mergerType = DIFF;
     uiOpCnt = sortMerge(mergerOptions, TABLE_R_NBLK + 1, TABLE_R_NBLK + TABLE_S_NBLK, 1, TABLE_R_NBLK, &uiNum, pBuf);
     dCheckBLKs(SM_POS, SM_POS + uiNum - 1, pBuf);

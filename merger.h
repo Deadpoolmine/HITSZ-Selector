@@ -17,6 +17,7 @@ typedef struct mergerOptions
     uINT uiAttrNumS;
     uINT uiAttrNumR;
     ENUM_MERGETYPE mergerType;
+    bool bIsOptimise;               /* 是否开启I/O优化器 */
 } mergerOptions_t;
 
 
