@@ -1,19 +1,5 @@
 #include "selector.h"
 
-
-#define GET_CUR_DBLK_NUM(basePos, segmentIndex) basePos + segmentIndex * uiNumPerSegment \
-                                                + puiDNextIndex[segmentIndex]
-
-#define GET_CUR_BBLK_NUM(segmentIndex)          uiBaseSegmentBBLKNum + segmentIndex
-
-#define GET_NEXT_RECORD(segmentIndex)           puiBNextIndex[segmentIndex]++
-#define GET_CUR_RECORD_INDEX(segmentIndex)      puiBNextIndex[segmentIndex]
-#define RESET_CUR_RECORD(segmentIndex)          puiBNextIndex[segmentIndex] = 0
-
-#define GET_NEXT_DBLK(segmentIndex)             puiDNextIndex[segmentIndex]++
-#define GET_CUR_DBLK_INDEX(segmentIndex)        puiDNextIndex[segmentIndex]
-#define RESET_CUR_DBLK(segmentIndex)            puiDNextIndex[segmentIndex] = 0
-
 /**
  * @brief 线性搜索
  * 
@@ -34,6 +20,7 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
     record_t    record;
 
     uINT        uiRecordNum;
+    uINT        uiKey;
 
     
     DISPLAY_TIPS(querySelector.cTips);
@@ -53,29 +40,14 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
         {
             record = bGetBLKRecord(uiBBLKNum, uiIndex, pBuf);
             WRITE_TILL_BLK_FILL(NULL);
-            switch (querySelector.uiAttrNum)
-            {
-            case 1:{
-                if(record.attr1 == querySelector.uiValue){
-                    bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
-                    uiWriteCurIndex++;     
-                    uiRecordNum++;
-                    DISPLAY_RECORD(record); 
-                }
+            uiKey = getKeyAttr(record, querySelector.uiAttrNum);
+            
+            if(querySelector.uiValue == uiKey){
+                bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
+                uiWriteCurIndex++;     
+                uiRecordNum++;
+                DISPLAY_RECORD(record); 
             }
-                break;
-            case 2:{
-                if(record.attr2 == querySelector.uiValue){
-                    bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex,record, pBuf);
-                    uiWriteCurIndex++;
-                    uiRecordNum++;
-                    DISPLAY_RECORD(record);      
-                }
-            }
-                break;
-            default:
-                break;
-            }   
         }
         freeBlockInBuffer(puBlk, pBuf);                                 /* 清除内存中读入的数据 */
     }
@@ -95,71 +67,6 @@ void linearSearch(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKH
     DISPLAY_IO_CNT();
 }
 
-/**
- * @brief 二阶段多路排序检测Compare BLK来判断是否完成
- * 
- * @param uiCompareBBLKNum Compare BLK在Buffer中的序号
- * @param uiSegment 分成了几路？几组？
- * @param pBuf 内存缓冲区
- * @return true 完成
- * @return false 未完成 
- */
-bool __tpmmsCheckIsOver(uINT uiCompareBBLKNum, uINT uiSegment, pBuffer pBuf){
-    bool        bIsOver = TRUE;
-    record_t    record;
-    for (uINT uiIndex = 0; uiIndex < uiSegment; uiIndex++)
-    {
-        record = bGetBLKRecord(uiCompareBBLKNum, uiIndex, pBuf);
-        if(record.attr1 != INVALID_ATTR || record.attr2 != INVALID_ATTR){
-            bIsOver = FALSE;
-            break;
-        }
-    }
-    return bIsOver;
-}
-
-/**
- * @brief 根据升序或者降序选择最大值或最小值所在的组号
- * 
- * @param uiCompareBBLKNum Compare BLK号
- * @param uiSegment 分组
- * @param uiAttrNum 关键字
- * @param bIsAscend 是否升序
- * @param pBuf 内存缓冲区
- * @return uINT 组好
- */
-uINT __tpmmsSelectMaxMinIndex(uINT uiCompareBBLKNum, uINT uiSegment, uINT uiAttrNum, bool bIsAscend, pBuffer pBuf){
-    int         iKeyMaxMin;
-    uINT        uiKey;
-    uINT        uiMaxMinIndex;
-    record_t    record;
-    if(bIsAscend){
-        iKeyMaxMin    = INT_MAX;
-    }
-    else {
-        iKeyMaxMin    = INT_MIN;
-    }
-    for (uINT uiIndex = 0; uiIndex < uiSegment; uiIndex++)
-    {
-        record = bGetBLKRecord(uiCompareBBLKNum, uiIndex, pBuf);
-        if(record.attr1 != INVALID_ATTR && record.attr2 != INVALID_ATTR){
-            uiKey = getKeyAttr(record, uiAttrNum);
-            if(bIsAscend){
-                if((int)uiKey < iKeyMaxMin){
-                    iKeyMaxMin = uiKey;
-                    uiMaxMinIndex = uiIndex;
-                }
-            }
-            else {
-                if((int)uiKey > iKeyMaxMin){
-                    iKeyMaxMin = uiKey;
-                    uiMaxMinIndex = uiIndex;
-                }
-            }
-        }
-    }
-    return uiMaxMinIndex;
-}
 /**
  * @brief 两阶段多路归并排序
  * 
@@ -199,7 +106,7 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
     uiBaseSegmentBBLKNum = -1;
     
     DISPLAY_TIPS(querySelector.cTips);
-
+    INIT_IO_COUNTER();
     if(uiNum < BUF_NBLK * BUF_NBLK){                                /* 两阶段二路归并排序 */
         uiNumPerSegment = BUF_NBLK;                                 /* 每组8个块 */
         uiSegment = uiNum / uiNumPerSegment;                        /* 分成uiSegment组 */
@@ -251,45 +158,19 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
         }
         
 
-        while (!__tpmmsCheckIsOver(uiCompareBBLKNum, uiSegment, pBuf))                  /* 判断TPMMS是否结束 */
+        while (!tpmmCheckIsOver(uiCompareBBLKNum, uiSegment, pBuf))                  /* 判断TPMMS是否结束 */
         {
             WRITE_TILL_BLK_FILL(NULL);
                                                                                         /* 选择最小值所在Segment的索引 */
-            uiMaxMinSegmentIndex = __tpmmsSelectMaxMinIndex(uiCompareBBLKNum, uiSegment, querySelector.uiAttrNum, bIsAscend, pBuf);
+            uiMaxMinSegmentIndex = tpmmSelectMaxMinIndex(uiCompareBBLKNum, uiSegment, querySelector.uiAttrNum, bIsAscend, pBuf);
             if((bIsAscend && uiMaxMinSegmentIndex != INT_MAX) || 
                (!bIsAscend && uiMaxMinSegmentIndex != INT_MIN)){                        /* 如果存在 */
                 record = bGetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, pBuf);   /* 获取该索引对应的record */
                 
                 bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, record, pBuf);           /* 写入Write BLK中 */
                 uiWriteCurIndex++;                                                      /* 写入指针++ */
-
-                GET_NEXT_RECORD(uiMaxMinSegmentIndex);                                  /* 该Segment的读指针++ */
-                if(GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex) != BLK_NRECORD){          /* 若没有读完 */
-                                                                                        /* 直接将下一个值送入Compare BLK中 */
-                    uiBBLKNum = GET_CUR_BBLK_NUM(uiMaxMinSegmentIndex);
-                    record = bGetBLKRecord(uiBBLKNum, GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex), pBuf);
-                    bSetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, record, pBuf);
-                }
-                else {                                                                  /* 否则 */
-                                                                                        /* 释放该Segment读入的块 */
-                    uiBBLKNum =  GET_CUR_BBLK_NUM(uiMaxMinSegmentIndex);
-                    freeBlockInBuffer(GET_BUF_DATA(pBuf, uiBBLKNum), pBuf);
-                    GET_NEXT_DBLK(uiMaxMinSegmentIndex);
-                                                                                        /* 读入该Segment的下一块 */
-                    if(GET_CUR_DBLK_INDEX(uiMaxMinSegmentIndex) != uiNumPerSegment){    /* 若该Segment具有下一块 */
-                        uiDBLKNum = GET_CUR_DBLK_NUM(querySelector.uiBasePos, uiMaxMinSegmentIndex);
-                        puBlk = readBlockFromDisk(uiDBLKNum, pBuf);
-                        RESET_CUR_RECORD(uiMaxMinSegmentIndex);   
-                        uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
-                        record = bGetBLKRecord(uiBBLKNum, GET_CUR_RECORD_INDEX(uiMaxMinSegmentIndex), pBuf);
-                    }
-                    else {                                                  
-                        record.attr1 = INVALID_ATTR;
-                        record.attr2 = INVALID_ATTR;
-                    }
-
-                    bSetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, record, pBuf);
-                }
+                tpmmShiftSegmentRecord(querySelector.uiBasePos, uiCompareBBLKNum, uiBaseSegmentBBLKNum, uiMaxMinSegmentIndex, 
+                                       puiBNextIndex, puiDNextIndex, uiNumPerSegment, pBuf);
             }
         }
         
@@ -305,6 +186,7 @@ void tpmms(querySelector_t querySelector, uINT uiDBLKLowNum, uINT uiDBLKHighNum,
         free(puiBNextIndex);
         free(puiDNextIndex);
     }
+    DISPLAY_IO_CNT();
 }
 
 

@@ -51,11 +51,27 @@ void sortInBuf(uINT uiBBLKLowNum, uINT uiBBLKHighNum, bool bIsAscend, uINT uiAtt
                                 bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
                                 bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
                             }
+                            if(uiKeyi == uiKeyj){
+                                uiKeyi = getAnotherKeyAttr(recordi, uiAttrNum);
+                                uiKeyj = getAnotherKeyAttr(recordj, uiAttrNum);
+                                if(uiKeyi < uiKeyj){
+                                    bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
+                                    bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
+                                }
+                            }
                         }
                         else {
                             if(uiKeyi > uiKeyj){                                        /* ½µÐòÅÅÁÐ */
                                 bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
                                 bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
+                            }
+                            if(uiKeyi == uiKeyj){
+                                uiKeyi = getAnotherKeyAttr(recordi, uiAttrNum);
+                                uiKeyj = getAnotherKeyAttr(recordj, uiAttrNum);
+                                if(uiKeyi > uiKeyj){
+                                    bSetBLKRecord(uiBBLKNumi, uiIndexi, recordj, pBuf);
+                                    bSetBLKRecord(uiBBLKNumj, uiIndexj, recordi, pBuf);
+                                }
                             }
                         }
                     }

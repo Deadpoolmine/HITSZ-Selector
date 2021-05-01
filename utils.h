@@ -7,9 +7,10 @@
 
 #ifndef UTILS
 #define UTILS
-
 /* 输出开关 */
 #define OUTPUT_DETAIL_ON
+/* 测试开关 */
+//#define TEST
 
 /* 显示相关 */ 
 #define TIPS_ERROR           "!!![ERROR] ->->-> "
@@ -84,6 +85,10 @@ static inline uINT getKeyAttr(record_t record, uINT uiAttrNum){
     }
 }
 
+static inline uINT getAnotherKeyAttr(record_t record, uINT uiAttrNum){
+    return getKeyAttr(record, 2 - uiAttrNum == 1 ? 2 : 1);
+}
+
 
 /* general */
 
@@ -152,6 +157,24 @@ static inline uINT getKeyAttr(record_t record, uINT uiAttrNum){
                                                                      \
 
                                             
+/* tpmmtool.c两阶段扫描工具 */
+#define GET_CUR_DBLK_NUM(basePos, segmentIndex) basePos + (segmentIndex) * uiNumPerSegment \
+                                                + puiDNextIndex[(segmentIndex)]
+
+#define GET_CUR_BBLK_NUM(segmentIndex)          uiBaseSegmentBBLKNum + segmentIndex
+
+#define GET_NEXT_RECORD(segmentIndex)           puiBNextIndex[segmentIndex]++
+#define GET_CUR_RECORD_INDEX(segmentIndex)      puiBNextIndex[segmentIndex]
+#define RESET_CUR_RECORD(segmentIndex)          puiBNextIndex[segmentIndex] = 0
+
+#define GET_NEXT_DBLK(segmentIndex)             puiDNextIndex[segmentIndex]++
+#define GET_CUR_DBLK_INDEX(segmentIndex)        puiDNextIndex[segmentIndex]
+#define RESET_CUR_DBLK(segmentIndex)            puiDNextIndex[segmentIndex] = 0
+
+bool tpmmCheckIfSame(uINT uiCompareBBLKNum, uINT uiSegment, uINT* puiSegmentIndexi,uINT* puiSegmentIndexj, pBuffer pBuf);
+uINT tpmmSelectMaxMinIndex(uINT uiCompareBBLKNum, uINT uiSegment, uINT uiAttrNum, bool bIsAscend, pBuffer pBuf);
+void tpmmShiftSegmentRecord(uINT uiDBasePos, uINT uiCompareBBLKNum, uINT uiBaseSegmentBBLKNum, uINT uiSegmentIndex, uINT* puiBNextIndex, uINT* puiDNextIndex, uINT uiNumPerSegment, pBuffer pBuf);
+bool tpmmCheckIsOver(uINT uiCompareBBLKNum, uINT uiSegment, pBuffer pBuf);
 
 /* buftool.c */
 /**

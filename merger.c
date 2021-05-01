@@ -235,3 +235,203 @@ uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHig
     //checkBuffer(pBuf);
     return uiOpCnt;
 }
+
+
+/**
+ * @brief 两趟扫描算法，实现集合二元操作
+ * 
+ * @param mergerOptions 二元操作选项
+ * @param uiDBLKLowNumS 关系S低磁盘块号
+ * @param uiDBLKHighNumS 关系S高磁盘块号
+ * @param uiDBLKLowNumR 关系R低磁盘块号
+ * @param uiDBLKHighNumR 关系R高磁盘块号
+ * @param puiNum 总共产生的块号指针
+ * @param pBuf 内存缓冲区
+ * @return uINT 
+ */
+uINT  tpmm(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHighNumS, uINT uiDBLKLowNumR, uINT uiDBLKHighNumR, uINT *puiNum, pBuffer pBuf){
+    uINT        uiNumS;
+    uINT        uiNumR;
+
+    uINT        uiSegmentS;
+    uINT        uiSegmentR;
+
+    uINT        uiSegmentIndexi;
+    uINT        uiSegmentIndexj;
+
+    uINT        uiNumPerSegment;
+
+    
+    
+    uINT        uiBaseSegmentBBLKNum;
+    
+    puChar      puBlk;
+    uINT        uiBBLKNum;
+
+    uINT        uiDBLKNum;
+
+    
+    puChar      puCompareBlk;
+    uINT        uiCompareBBLKNum;
+
+    uINT*       puiBNextIndex;                                      /* 组 Buffer Record指针*/
+    uINT*       puiDNextIndex;                                      /* 组 磁盘读指针 */
+    
+    puChar      puWriteBlk;
+    uINT        uiWriteBBLKNum;
+    uINT        uiWriteCurIndex;                                    /* 写入 指针 */
+
+    record_t    record;
+    record_t    recordi;
+    record_t    recordj;
+    bool        bHasSame;
+    uINT        uiMaxMinSegmentIndex;
+
+    uINT        uiOpCnt;
+
+    switch (mergerOptions.mergerType)
+    {
+    case UNION:
+        DISPLAY_TIPS("基于排序的集合并运算");
+        break;
+    case INTER:
+        DISPLAY_TIPS("基于排序的集合交运算");
+        break;
+    case DIFF:
+        DISPLAY_TIPS("基于排序的集合差运算");
+        break; 
+    default:
+        break;
+    }
+
+    uiOpCnt = 0;
+    uiNumS = uiDBLKHighNumS - uiDBLKLowNumS + 1;
+    uiNumR = uiDBLKHighNumR - uiDBLKLowNumR + 1;
+
+    uiBaseSegmentBBLKNum = -1;
+    
+    INIT_IO_COUNTER();
+    if(uiNumS < BUF_NBLK * BUF_NBLK){                               /* 两阶段二路归并排序 */
+        uiNumPerSegment = BUF_NBLK;                                 /* 每组8个块 */
+        uiSegmentS = uiNumS / uiNumPerSegment;                      /* 分成uiSegmentS组 */
+        uiSegmentR = uiNumR / uiNumPerSegment;
+        
+        if(uiSegmentS + uiSegmentR > BLK_NRECORD){
+            printf(TIPS_ERROR "[tpmm: Compare BLK can't hold #%d segments]\n", uiSegmentS);
+            return uiOpCnt;    
+        }
+
+        dSetGlobNextBLKNum(SM_TEMP_S_POS);
+        for (size_t i = 0; i < uiSegmentS; i++)                      /* 第一趟扫描 */
+        {
+            uiDBLKNum = uiDBLKLowNumS + i * uiNumPerSegment;         /* S中该组在磁盘中的位置 */
+            for (size_t j = 0; j < uiNumPerSegment; j++)
+            {
+                readBlockFromDisk(uiDBLKNum + j, pBuf);
+            }
+            sortInBuf(1, uiNumPerSegment, TRUE, 1, pBuf);
+            dWriteBLK(1, uiNumPerSegment, pBuf);
+        }
+
+        for (size_t i = 0; i < uiSegmentR; i++)                      /* 第一趟扫描 */
+        {
+            uiDBLKNum = uiDBLKLowNumR + i * uiNumPerSegment;         /* R中该组在磁盘中的位置 */
+            for (size_t j = 0; j < uiNumPerSegment; j++)
+            {
+                readBlockFromDisk(uiDBLKNum + j, pBuf);
+            }
+            sortInBuf(1, uiNumPerSegment, TRUE, 1, pBuf);
+            dWriteBLK(1, uiNumPerSegment, pBuf);
+        }
+
+        dSetGlobNextBLKNum(SM_POS);
+        puCompareBlk     = getNewBlockInBuffer(pBuf);
+        uiCompareBBLKNum = bConvertBLKAddr2Num(puCompareBlk, pBuf);
+        bClearBLK(uiCompareBBLKNum, pBuf);
+
+        INIT_WRITE_BLK();
+
+        puiBNextIndex = (uINT *)malloc((uiSegmentS + uiSegmentR) * sizeof(uINT));
+        puiDNextIndex = (uINT *)malloc((uiSegmentS + uiSegmentR) * sizeof(uINT));
+        for (uINT uiSegmentIndex = 0; uiSegmentIndex < uiSegmentS + uiSegmentR; uiSegmentIndex++)
+        {
+            RESET_CUR_RECORD(uiSegmentIndex);
+            RESET_CUR_DBLK(uiSegmentIndex);
+        }
+
+        for (uINT uiSegmentIndex = 0; uiSegmentIndex < uiSegmentS + uiSegmentR; uiSegmentIndex++)                                       /* 初始每个分组都读入一块至内存 */
+        {
+            uiDBLKNum = GET_CUR_DBLK_NUM(SM_TEMP_S_POS, uiSegmentIndex);
+            puBlk     = readBlockFromDisk(uiDBLKNum, pBuf);  
+            uiBBLKNum = bConvertBLKAddr2Num(puBlk, pBuf);
+            
+            if(uiBaseSegmentBBLKNum == -1){
+                uiBaseSegmentBBLKNum = uiBBLKNum;
+            }
+            
+            record = bGetBLKRecord(uiBBLKNum, GET_CUR_RECORD_INDEX(uiSegmentIndex), pBuf);
+            bSetBLKRecord(uiCompareBBLKNum, uiSegmentIndex, record, pBuf);              /* 初始化Compare BLK */
+        }
+
+        while (!tpmmCheckIsOver(uiCompareBBLKNum, uiSegmentS + uiSegmentR, pBuf))     /* 判断TPMMS是否结束 */
+        {
+            WRITE_TILL_BLK_FILL(*puiNum = *puiNum + 1);
+            bHasSame = tpmmCheckIfSame(uiCompareBBLKNum, uiSegmentR + uiSegmentS, &uiSegmentIndexi, &uiSegmentIndexj, pBuf);
+            if(bHasSame){                                                                        /* 如果存在 */
+                recordi = bGetBLKRecord(uiCompareBBLKNum, uiSegmentIndexi, pBuf);                /* 获取该索引对应的record */
+                recordj = bGetBLKRecord(uiCompareBBLKNum, uiSegmentIndexj, pBuf);
+                if(uiSegmentIndexi + 1 <= uiSegmentS && uiSegmentIndexj + 1 > uiSegmentS){        /* uiSegemnti属于关系S，uiSegemnti属于关系R*/
+                        
+                    if(mergerOptions.mergerType == INTER || mergerOptions.mergerType == UNION){
+                        bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, recordi, pBuf);            /* 写入Write BLK中 */
+                        uiWriteCurIndex++;    
+                        uiOpCnt++;  
+                        
+                    }
+                    tpmmShiftSegmentRecord(SM_TEMP_S_POS, uiCompareBBLKNum, uiBaseSegmentBBLKNum,uiSegmentIndexi, puiBNextIndex, 
+                                                 puiDNextIndex, uiNumPerSegment, pBuf);
+                    tpmmShiftSegmentRecord(SM_TEMP_S_POS,uiCompareBBLKNum, uiBaseSegmentBBLKNum, uiSegmentIndexj, puiBNextIndex, 
+                                                puiDNextIndex, uiNumPerSegment, pBuf);
+                }
+                else {
+                    tpmmShiftSegmentRecord(SM_TEMP_S_POS, uiCompareBBLKNum, uiBaseSegmentBBLKNum, uiSegmentIndexj, puiBNextIndex, 
+                                             puiDNextIndex, uiNumPerSegment, pBuf);
+                }
+            }
+            else {
+                uiMaxMinSegmentIndex = tpmmSelectMaxMinIndex(uiCompareBBLKNum, uiSegmentS + uiSegmentR, 1, TRUE, pBuf);
+                if(uiMaxMinSegmentIndex != INT_MAX){                           /* 如果存在 */
+                    record = bGetBLKRecord(uiCompareBBLKNum, uiMaxMinSegmentIndex, pBuf);   /* 获取该索引对应的record */
+                    if(mergerOptions.mergerType == UNION){
+                        bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, record, pBuf);            /* 写入Write BLK中 */
+                        uiOpCnt++;
+                        uiWriteCurIndex++;
+                    }
+                    if(mergerOptions.mergerType == DIFF){
+                        if(uiMaxMinSegmentIndex + 1 <= uiSegmentS){
+                            bSetBLKRecord(uiWriteBBLKNum, uiWriteCurIndex, record, pBuf);            /* 写入Write BLK中 */
+                            uiOpCnt++;
+                            uiWriteCurIndex++;
+                        }
+                    }
+                    tpmmShiftSegmentRecord(SM_TEMP_S_POS,uiCompareBBLKNum, uiBaseSegmentBBLKNum, uiMaxMinSegmentIndex, puiBNextIndex, 
+                                             puiDNextIndex, uiNumPerSegment, pBuf);
+                }
+            }
+        }
+        
+        if(uiWriteCurIndex != 0) {
+            dWriteBLK(uiWriteBBLKNum, 1, pBuf);
+        }
+        else {
+            freeBlockInBuffer(puWriteBlk, pBuf);
+        }
+
+        freeBlockInBuffer(puCompareBlk, pBuf);
+
+        free(puiBNextIndex);
+        free(puiDNextIndex);
+    }
+    DISPLAY_IO_CNT();
+    return uiOpCnt;
+}

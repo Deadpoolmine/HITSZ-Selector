@@ -1,7 +1,12 @@
 #include "utils.h"
 
+
 #define SM_TEMP_S_POS         5000
+#ifdef TEST
+#define SM_TEMP_R_POS         5032
+#else
 #define SM_TEMP_R_POS         6000
+#endif // DEBUG
 #define SM_POS                7000
 
 typedef enum ENUM_MergeType
@@ -22,4 +27,4 @@ typedef struct mergerOptions
 
 
 uINT sortMerge(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHighNumS, uINT uiDBLKLowNumR, uINT uiDBLKHighNumR,uINT *puiNum,  pBuffer pBuf);
-uINT intersection(uINT uiDBLKLowNumS, uINT uiDBLKHighNumS, uINT uiDBLKLowNumR, uINT uiDBLKHighNumR, pBuffer pBuf);
+uINT tpmm(mergerOptions_t mergerOptions, uINT uiDBLKLowNumS, uINT uiDBLKHighNumS, uINT uiDBLKLowNumR, uINT uiDBLKHighNumR,uINT *puiNum, pBuffer pBuf);
